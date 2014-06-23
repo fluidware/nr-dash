@@ -22,10 +22,14 @@ function hashchange ( ev ) {
 	}
 
 	if ( $newItem && $newDiv ) {
+		hash = newHash;
 		element.klass( $newItem.parentNode, "active" );
 		element.klass( $newItem, "hidden", false );
 	}
 	else {
+		hash = DEFAULT;
 		document.location.hash = DEFAULT;
 	}
+
+	element.dispatch( COPY, "render" );
 }

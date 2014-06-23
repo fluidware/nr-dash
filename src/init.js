@@ -12,16 +12,19 @@ function init () {
 			error( new Error( "API key not found" ) );
 		}
 		else {
+			log( "Retrieved configuration" );
+
 			util.merge( config, arg );
 			headers["X-Api-Key"] = config.keys.api;
 
 			generate().then(function () {
 				events();
 				defer.resolve( true );
+			}, function ( e ) {
+				defer.reject( e );
 			} );
 		}
 	}, function ( e ) {
-		error( e );
 		defer.reject( e );
 	} );
 

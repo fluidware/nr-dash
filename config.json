@@ -1,5 +1,7 @@
 {
-	"keys": {
+	"hostname" : "localhost",
+	"expire" : 300,
+	"keys" : {
 		"api"  : null,
 		"data" : null
 	},
@@ -8,7 +10,7 @@
 			"uri" : "https://api.newrelic.com/v2/applications.json",
 			"children" : [
 				{
-					"Hosts": "https://api.newrelic.com/v2/applications/:id/hosts.json"
+					"Hosts" : "https://api.newrelic.com/v2/applications/:id/hosts.json"
 				}
 			]
 		},

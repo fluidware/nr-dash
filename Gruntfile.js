@@ -25,6 +25,7 @@ module.exports = function (grunt) {
 					"src/generate.js",
 					"src/hashchange.js",
 					"src/init.js",
+					"src/view.js",
 					"src/interface.js",
 					"src/outro.js"
 				],

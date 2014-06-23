@@ -6,5 +6,5 @@
  * @return {Undefined}
  */
 function error ( err ) {
-	util.log( err, "error" );
+	log( err.stack || err.message || err, "error" );
 }

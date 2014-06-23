@@ -12,18 +12,27 @@
 ( function ( document, window, keigai ) {
 "use strict";
 
-var util    = keigai.util,
+var store   = keigai.store,
+    list    = keigai.list,
+    grid    = keigai.grid,
+    util    = keigai.util,
     $       = util.$,
     array   = util.array,
     element = util.element,
+    log     = util.log,
     stop    = util.stop,
     prevent = util.prevent,
     target  = util.target,
+    when    = util.when,
     hash    = document.location.hash.replace( "#", "" ),
     headers = {},
     config  = {},
+    grids   = [],
+    lists   = [],
     stores  = [],
     render  = window.requestAnimationFrame || util.delay,
+    PILLS   = $( "ul.pills" )[0],     // expected Element
+    COPY    = $( "section.copy" )[0], // expected Element
     NOTHASH = /.*\#/,
     OPTIONS, DEFAULT;
 
@@ -43,6 +52,7 @@ function click ( ev ) {
 
 		if ( document.location.hash.replace( "#", "" ) !== el.childNodes[0].href.replace( NOTHASH, "" ) ) {
 			element.dispatch( el.childNodes[0], "click" );
+			log( "Dispatched click for navigation target/child" );
 		}
 	}
 }
@@ -55,7 +65,7 @@ function click ( ev ) {
  * @return {Undefined}
  */
 function error ( err ) {
-	util.log( err, "error" );
+	log( err.stack || err.message || err, "error" );
 }
 
 /**
@@ -68,13 +78,19 @@ function events () {
 	// Setting listeners
 	window.addEventListener( "hashchange", hashchange, false );
 	$( "nav" )[0].addEventListener( "click", click, false );
+	COPY.addEventListener( "render", view, false );
+
+	log( "Set event listeners" );
 
 	// Setting state
 	if ( hash !== "" && array.contains( OPTIONS, hash ) ) {
+		log( "Loading hash" );
 		element.klass( $( "#" + hash )[0], "hidden", false );
 		element.klass( $( "a[href='#" + hash + "']" )[0].parentNode, "active" );
+		element.dispatch( COPY, "render" );
 	}
 	else {
+		log( "Loading default" );
 		document.location.hash = DEFAULT;
 	}
 }
@@ -97,15 +113,39 @@ function generate () {
 	} );
 
 	render( function () {
+		var deferreds = [];
+
 		// DOM injection
-		element.html( $( "ul.pills" )[0], pills.join( "\n" ) );
-		element.html( $( "section.copy" )[0], copy.join( "\n" ) );
+		element.html( PILLS, pills.join( "\n" ) );
+		element.html( COPY, copy.join( "\n" ) );
+
+		log( "Rendered Elements" );
 
 		// Psuedo constants
 		OPTIONS = $( "ul.pills li a" ).map( function ( i ) { return i.href.replace( NOTHASH, "" ); } );
 		DEFAULT = OPTIONS[0];
 
-		defer.resolve( true );
+		// Generating stores
+		array.each( sections, function ( i ) {
+			var lstore;
+
+			if ( config.pills[i].uri ) {
+				lstore = store( null, {id: i, expires: config.expire * 1000, headers: headers} );
+				deferreds.push( lstore.setUri( config.pills[i].uri ) );
+				stores.push( lstore );
+			}
+		} );
+
+		log( "Created DataStores" );
+
+		// Resolve deferred after we have data
+		when( deferreds ).then( function () {
+			log( "Retrieved API data" );
+			defer.resolve( true );
+		}, function ( e ) {
+			error( e );
+			defer.reject( e );
+		} );
 	} );
 
 	return defer;
@@ -135,12 +175,16 @@ function hashchange ( ev ) {
 	}
 
 	if ( $newItem && $newDiv ) {
+		hash = newHash;
 		element.klass( $newItem.parentNode, "active" );
 		element.klass( $newItem, "hidden", false );
 	}
 	else {
+		hash = DEFAULT;
 		document.location.hash = DEFAULT;
 	}
+
+	element.dispatch( COPY, "render" );
 }
 
 /**
@@ -157,28 +201,47 @@ function init () {
 			error( new Error( "API key not found" ) );
 		}
 		else {
+			log( "Retrieved configuration" );
+
 			util.merge( config, arg );
 			headers["X-Api-Key"] = config.keys.api;
 
 			generate().then(function () {
 				events();
 				defer.resolve( true );
+			}, function ( e ) {
+				defer.reject( e );
 			} );
 		}
 	}, function ( e ) {
-		error( e );
 		defer.reject( e );
 	} );
 
 	return defer;
 }
 
+/**
+ * Renders the view
+ *
+ * @method view
+ * @return {Undefined} undefined
+ */
+function view () {
+	log( "Rendering '" + hash + "'" );
+}
+
 // Public interface
 window.nrDash = {
+	grids   : grids,
+	lists   : lists,
 	stores  : stores,
 	version : "0.1.0"
 };
 
 // Initializing
-init();
+init().then( function () {
+	log( "nr-dash is running" );
+}, function () {
+	error( "nr-dash failed to start" );
+} );
 } )( document, window, keigai );

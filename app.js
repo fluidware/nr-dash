@@ -2,7 +2,7 @@
 
 var TurtleIO = require( "turtle.io"),
     config   = require( "./config.json" ),
-    DEFAULT  = config["default"] || "localhost",
+    HOSTNAME = config["hostname"] || "localhost",
     app      = new TurtleIO(),
     vhosts   = {};
 
@@ -11,20 +11,16 @@ if ( !config.keys.api || !config.keys.data ) {
 	process.exit( 1 );
 }
 
-// Setting web app directory
-vhosts[DEFAULT] = "dist";
+vhosts[HOSTNAME] = "dist";
 
-// Removing unneeded key
-delete config["default"];
+delete config["hostname"];
 
-// Creating API abstraction without using a proxy
 app.get( "/config", function ( req, res ) {
 	app.respond( req, res, config );
-}, DEFAULT );
+}, HOSTNAME );
 
-// Starting server
 app.start( {
 	root    : ".",
-	default : DEFAULT,
+	default : HOSTNAME,
 	vhosts  : vhosts
 } );
