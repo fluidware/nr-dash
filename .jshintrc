@@ -17,5 +17,10 @@
 	"boss": true,
 	"eqnull": true,
 	"expr": true,
-	"node": true
+	"node": true,
+	"globals": {
+		"document": true,
+		"window": true,
+		"keigai": true
+	}
 }

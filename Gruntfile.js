@@ -19,19 +19,36 @@ module.exports = function (grunt) {
 				src : [
 					"<banner>",
 					"src/intro.js",
+					"src/click.js",
+					"src/error.js",
+					"src/events.js",
+					"src/generate.js",
+					"src/hashchange.js",
+					"src/init.js",
+					"src/interface.js",
 					"src/outro.js"
 				],
-				dest : "lib/<%= pkg.name %>.js"
+				dest : "dist/js/<%= pkg.name %>.js"
 			}
 		},
 		jshint : {
 			options : {
 				jshintrc : ".jshintrc"
 			},
-			src : "lib/<%= pkg.name %>.js"
+			src : "dist/js/<%= pkg.name %>.js"
 		},
 		nodeunit : {
 			all : ["test/*.js"]
+		},
+		sass: {
+			dist: {
+				options : {
+					style: "compressed"
+				},
+				files: {
+					"dist/css/style.css": "sass/style.scss"
+				}
+			}
 		},
 		sed : {
 			"version" : {
@@ -58,6 +75,7 @@ module.exports = function (grunt) {
 
 	// tasks
 	grunt.loadNpmTasks("grunt-sed");
+	grunt.loadNpmTasks("grunt-contrib-sass");
 	grunt.loadNpmTasks("grunt-contrib-concat");
 	grunt.loadNpmTasks("grunt-contrib-nodeunit");
 	grunt.loadNpmTasks("grunt-contrib-jshint");
@@ -65,6 +83,6 @@ module.exports = function (grunt) {
 
 	// aliases
 	grunt.registerTask("test", ["jshint"/*, "nodeunit"*/]);
-	grunt.registerTask("build", ["concat", "sed"]);
+	grunt.registerTask("build", ["concat", "sed", "sass"]);
 	grunt.registerTask("default", ["build", "test"]);
 };

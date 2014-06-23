@@ -1,4 +1,19 @@
 {
-	"api"  : null,
-	"data" : null
+	"keys": {
+		"api"  : null,
+		"data" : null
+	},
+	"pills" : {
+		"Applications" : {
+			"uri" : "https://api.newrelic.com/v2/applications.json",
+			"children" : [
+				{
+					"Hosts": "https://api.newrelic.com/v2/applications/:id/hosts.json"
+				}
+			]
+		},
+		"Servers" : {
+			"uri" : "https://api.newrelic.com/v2/servers.json"
+		}
+	}
 }

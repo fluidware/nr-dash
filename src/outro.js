@@ -1,1 +1,3 @@
-module.exports = null;
+// Initializing
+init();
+} )( document, window, keigai );

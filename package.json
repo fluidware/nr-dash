@@ -31,13 +31,17 @@
     "turtle.io": "2.0.15"
   },
   "devDependencies": {
-    "grunt" : "~0.4.1",
-    "grunt-cli" : "~0.1.7",
-    "grunt-sed": "~0.1",
+    "grunt": "~0.4.1",
+    "grunt-cli": "~0.1.7",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-jshint": "~0.1",
     "grunt-contrib-nodeunit": "~0.1.2",
-    "grunt-contrib-watch": "~0.2"
+    "grunt-contrib-sass": "^0.7.3",
+    "grunt-contrib-watch": "~0.2",
+    "grunt-sed": "~0.1"
   },
-  "keywords": ["new relic", "dashboard"]
+  "keywords": [
+    "new relic",
+    "dashboard"
+  ]
 }
