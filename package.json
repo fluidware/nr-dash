@@ -1,0 +1,43 @@
+{
+  "name": "nr-dash",
+  "description": "New Relic Dashboard",
+  "version": "0.1.0",
+  "homepage": "http://fluidware.com",
+  "author": {
+    "name": "Jason Mulligan",
+    "email": "jmulligan@fluidware.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/fluidware/nr-dash.git"
+  },
+  "bugs": {
+    "url": "https://github.com/fluidware/nr-dash/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.github.com/fluidware/nr-dash/master/LICENSE"
+    }
+  ],
+  "main": "app.js",
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "dependencies": {
+    "turtle.io": "2.0.15"
+  },
+  "devDependencies": {
+    "grunt" : "~0.4.1",
+    "grunt-cli" : "~0.1.7",
+    "grunt-sed": "~0.1",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-jshint": "~0.1",
+    "grunt-contrib-nodeunit": "~0.1.2",
+    "grunt-contrib-watch": "~0.2"
+  },
+  "keywords": ["new relic", "dashboard"]
+}

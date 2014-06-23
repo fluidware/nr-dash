@@ -1,0 +1,8 @@
+/node_modules/
+/src/
+/test/
+/templates/
+.git
+.gitignore
+.jshintrc
+Gruntfile.js
