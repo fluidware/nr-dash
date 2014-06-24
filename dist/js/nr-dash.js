@@ -103,13 +103,13 @@ function events () {
  */
 function generate () {
 	var defer    = util.defer(),
-	    sections = array.keys( config.pills ).sort( array.sort ),
+	    sections = array.keySort( config.pills, "name asc" ),
 	    pills    = [],
 	    copy     = [];
 
 	array.each(sections, function ( i ) {
-		pills.push( "<li><a href=\"#" + i.toLowerCase() + "\">" + i + "</a></li>" );
-		copy.push( "<div id=\"" + i.toLowerCase() + "\" class=\"hidden\"></div>" );
+		pills.push( "<li><a href=\"#" + i.slug + "\">" + i.name + "</a></li>" );
+		copy.push( "<div id=\"" + i.slug + "\" class=\"hidden\"></div>" );
 	} );
 
 	render( function () {
@@ -129,9 +129,9 @@ function generate () {
 		array.each( sections, function ( i ) {
 			var lstore;
 
-			if ( config.pills[i].uri ) {
-				lstore = store( null, {id: i, expires: config.expire * 1000, headers: headers} );
-				deferreds.push( lstore.setUri( config.pills[i].uri ) );
+			if ( i.uri ) {
+				lstore = store( null, {id: i.slug, expires: config.expire * 1000, headers: headers, key: "id", source: i.source} );
+				deferreds.push( lstore.setUri( i.uri ) );
 				stores.push( lstore );
 			}
 		} );
