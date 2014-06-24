@@ -3,7 +3,6 @@
 
 var store     = keigai.store,
     list      = keigai.list,
-    grid      = keigai.grid,
     util      = keigai.util,
     $         = util.$,
     array     = util.array,
@@ -18,7 +17,7 @@ var store     = keigai.store,
     config    = {},
     grids     = [],
     lists     = [],
-    stores    = [],
+    stores    = {},
     templates = {{TEMPLATES}},
     render    = window.requestAnimationFrame || util.delay,
     PILLS     = $( "ul.pills" )[0],     // expected Element

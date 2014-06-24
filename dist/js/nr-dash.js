@@ -14,7 +14,6 @@
 
 var store     = keigai.store,
     list      = keigai.list,
-    grid      = keigai.grid,
     util      = keigai.util,
     $         = util.$,
     array     = util.array,
@@ -29,8 +28,8 @@ var store     = keigai.store,
     config    = {},
     grids     = [],
     lists     = [],
-    stores    = [],
-    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n"},
+    stores    = {},
+    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_transactions":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n"},
     render    = window.requestAnimationFrame || util.delay,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
@@ -133,7 +132,7 @@ function generate () {
 			if ( i.uri ) {
 				lstore = store( null, {id: i.slug, expires: config.expire * 1000, headers: headers, key: "id", source: i.source} );
 				deferreds.push( lstore.setUri( i.uri ) );
-				stores.push( lstore );
+				stores[i.slug] = lstore;
 			}
 		} );
 
@@ -178,7 +177,7 @@ function hashchange ( ev ) {
 	if ( $newItem && $newDiv ) {
 		hash = newHash;
 		element.klass( $newItem.parentNode, "active" );
-		element.klass( $newItem, "hidden", false );
+		element.klass( $newDiv, "hidden", false );
 	}
 	else {
 		hash = DEFAULT;
@@ -228,7 +227,25 @@ function init () {
  * @return {Undefined} undefined
  */
 function view () {
-	log( "Rendering '" + hash + "'" );
+	var store  = stores[hash],
+	    target = $( "#" + hash )[0];
+
+	if ( target.childNodes.length === 0 ) {
+		log( "Rendering '" + hash + "'" );
+
+		if ( hash === "applications" ) {
+			list( target, store, templates.list_applications, {order: "last_reported_at desc"});
+		}
+		else if ( hash === "servers" ) {
+			list( target, store, templates.list_servers, {order: "name asc"});
+		}
+		else if ( hash === "transactions" ) {
+			list( target, store, templates.list_transactions, {order: "name asc"});
+		}
+	}
+	else {
+		log( "Viewing '" + hash + "'" );
+	}
 }
 
 // Public interface

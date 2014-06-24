@@ -35,7 +35,7 @@ function generate () {
 			if ( i.uri ) {
 				lstore = store( null, {id: i.slug, expires: config.expire * 1000, headers: headers, key: "id", source: i.source} );
 				deferreds.push( lstore.setUri( i.uri ) );
-				stores.push( lstore );
+				stores[i.slug] = lstore;
 			}
 		} );
 

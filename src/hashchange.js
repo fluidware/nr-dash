@@ -24,7 +24,7 @@ function hashchange ( ev ) {
 	if ( $newItem && $newDiv ) {
 		hash = newHash;
 		element.klass( $newItem.parentNode, "active" );
-		element.klass( $newItem, "hidden", false );
+		element.klass( $newDiv, "hidden", false );
 	}
 	else {
 		hash = DEFAULT;
