@@ -5,7 +5,37 @@ ul.list {
 
 	li {
 		list-style: none;
-		vertical-align: text-top;
+		vertical-align: text-top !important;
+
+		span.metric {
+			font-weight: normal;
+			display: block;
+
+			span.name {
+				display: inline-block;
+				width: 60%;
+			}
+
+			span.value {
+				font-weight: bold;
+			}
+		}
+	}
+}
+
+#servers {
+	ul.list {
+		width: 30%;
+
+		li {
+			padding: 10px;
+			margin-bottom: 10px;
+			border-bottom: 1px solid #ccc;
+
+			&:last-child {
+				border-bottom: 0px;
+			}
+		}
 	}
 }
 
@@ -27,20 +57,6 @@ ul.list {
 				white-space: nowrap;
 				overflow: hidden;
 				padding: 10px;
-
-				span.metric {
-					font-weight: normal;
-					display: block;
-
-					span.name {
-						display: inline-block;
-						width: 60%;
-					}
-
-					span.value {
-						font-weight: bold;
-					}
-				}
 			}
 
 			&>* {

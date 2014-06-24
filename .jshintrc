@@ -21,6 +21,7 @@
 	"globals": {
 		"document": true,
 		"window": true,
-		"keigai": true
+		"keigai": true,
+		"moment": true
 	}
 }
