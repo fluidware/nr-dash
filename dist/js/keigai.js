@@ -6,7 +6,7 @@
  * @license BSD-3 <https://raw.github.com/avoidwork/keigai/master/LICENSE>
  * @link http://keigai.io
  * @module keigai
- * @version 0.3.1
+ * @version 0.3.3
  */
 ( function ( global ) {
 
@@ -1352,6 +1352,8 @@ var array = {
 			sub = "";
 		}
 
+		sorts.push( "try {" );
+
 		array.each( queries, function ( i ) {
 			var s = ".",
 			    e = "";
@@ -1372,6 +1374,7 @@ var array = {
 		} );
 
 		sorts.push( "else return 0;" );
+		sorts.push( "} catch ( e ) { return 0; }" );
 
 		return obj.sort( new Function( "a", "b", sorts.join( "\n" ) ) );
 	},
@@ -3911,7 +3914,7 @@ DataList.prototype.refresh = function ( redraw, create ) {
 			// Replacing dot notation properties
 			array.each( items, function ( attr ) {
 				var key   = attr.replace( /\{\{|\}\}/g, "" ),
-				    value = utility.walk( i.data, key );
+				    value = utility.walk( i.data, key ) || "";
 
 				reg.compile( string.escape( attr ), "g" );
 				html = html.replace( reg, value );
@@ -3934,7 +3937,7 @@ DataList.prototype.refresh = function ( redraw, create ) {
 			// Replacing dot notation properties
 			array.each( items, function ( attr ) {
 				var key   = attr.replace( /\{\{|\}\}/g, "" ),
-				    value = utility.walk( i.data, key );
+				    value = utility.walk( i.data, key ) || "";
 
 				reg.compile( string.escape( attr ), "g" );
 
@@ -8993,18 +8996,25 @@ var utility = {
 	 * @memberOf utility
 	 * @param  {Mixed}  obj  Object or Array
 	 * @param  {String} arg  String describing the property to return
-	 * @return {Mixed}       arg
+	 * @return {Mixed}       Target or undefined
 	 * @example
 	 * var obj = {a: [{b: true}]};
 	 *
 	 * keigai.util.walk( obj, "a[0].b" ); // true
 	 */
 	walk : function ( obj, arg ) {
+		var output = obj;
+
 		array.each( arg.replace( /\]$/, "" ).replace( /\]/g, "." ).replace( /\.\./g, "." ).split( /\.|\[/ ), function ( i ) {
-			obj = obj[i];
+			if ( output[i] === undefined || output[i] === null ) {
+				output = undefined;
+				return false;
+			}
+
+			output = output[i];
 		} );
 
-		return obj;
+		return output;
 	},
 
 	/**
@@ -9128,7 +9138,7 @@ function xhr () {
 	    XMLHttpRequest, headers, success, failure, state;
 
 	headers = {
-		"user-agent"   : "keigai/0.3.1 node.js/" + process.versions.node.replace( /^v/, "" ) + " (" + string.capitalize( process.platform ) + " V8/" + process.versions.v8 + " )",
+		"user-agent"   : "keigai/0.3.3 node.js/" + process.versions.node.replace( /^v/, "" ) + " (" + string.capitalize( process.platform ) + " V8/" + process.versions.v8 + " )",
 		"content-type" : "text/plain",
 		"accept"       : "*/*"
 	};
@@ -9820,7 +9830,7 @@ return {
 		walk     : utility.walk,
 		when     : utility.when
 	},
-	version : "0.3.1"
+	version : "0.3.3"
 };
 
 } )();
