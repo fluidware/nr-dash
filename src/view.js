@@ -12,7 +12,7 @@ function view () {
 		log( "Rendering '" + hash + "'" );
 
 		if ( hash === "applications" ) {
-			list( target, store, templates.list_applications, {order: "last_reported_at desc"});
+			list( target, store, templates.list_applications, {order: "application_summary.response_time desc, name asc"});
 		}
 		else if ( hash === "servers" ) {
 			list( target, store, templates.list_servers, {order: "summary.memory desc, name asc"});

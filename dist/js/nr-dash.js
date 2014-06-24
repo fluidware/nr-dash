@@ -27,7 +27,7 @@ var store     = keigai.store,
     headers   = {},
     config    = {},
     stores    = {},
-    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n","list_transactions":"<div>\n\t<h3>{{name}}</h3>\n\t<p>{{transaction_name}}</p>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n"},
+    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong class=\"{{health_status}}\">{{name}}</strong>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n","list_transactions":"<div>\n\t<h3>{{name}}</h3>\n\t<p>{{transaction_name}}</p>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n"},
     render    = window.requestAnimationFrame || util.delay,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
@@ -232,7 +232,7 @@ function view () {
 		log( "Rendering '" + hash + "'" );
 
 		if ( hash === "applications" ) {
-			list( target, store, templates.list_applications, {order: "last_reported_at desc"});
+			list( target, store, templates.list_applications, {order: "application_summary.response_time desc, name asc"});
 		}
 		else if ( hash === "servers" ) {
 			list( target, store, templates.list_servers, {order: "summary.memory desc, name asc"});

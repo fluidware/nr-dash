@@ -23,6 +23,21 @@ ul.list {
 	}
 }
 
+#applications {
+	.green {
+		color: green;
+	}
+
+	.orange {
+		color: orange;
+	}
+
+	.red {
+		color: red;
+	}
+}
+
+#applications,
 #servers {
 	ul.list {
 		width: 30%;
