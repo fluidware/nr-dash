@@ -18,7 +18,7 @@ function view () {
 			list( target, store, templates.list_servers, {order: "name asc"});
 		}
 		else if ( hash === "transactions" ) {
-			list( target, store, templates.list_transactions, {order: "name asc"});
+			list( target, store, templates.list_transactions, {order: "application_summary.response_time desc, name asc"});
 		}
 	}
 	else {

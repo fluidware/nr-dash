@@ -1,0 +1,55 @@
+/* Generic DataList styling */
+ul.list {
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
+
+	li {
+		list-style: none;
+		vertical-align: text-top;
+	}
+}
+
+#transactions {
+	text-align: center;
+
+	ul.list {
+		li {
+			background: #fff;
+			border: 1px solid #ccc;
+			display: inline-block;
+			width: 45%;
+			margin: 0 3% 3% 0;
+			vertical-align: text-top;
+
+			div {
+				text-align: left;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				overflow: hidden;
+				padding: 10px;
+
+				span.metric {
+					font-weight: normal;
+					display: block;
+
+					span.name {
+						display: inline-block;
+						width: 60%;
+					}
+
+					span.value {
+						font-weight: bold;
+					}
+				}
+			}
+
+			&>* {
+				margin: 5px;
+			}
+
+			&:last-child {
+				margin: 0 0 0 0;
+			}
+		}
+	}
+}

@@ -26,10 +26,8 @@ var store     = keigai.store,
     hash      = document.location.hash.replace( "#", "" ),
     headers   = {},
     config    = {},
-    grids     = [],
-    lists     = [],
     stores    = {},
-    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_transactions":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n"},
+    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n</div>\n","list_transactions":"<div>\n\t<h3>{{name}}</h3>\n\t<p>{{transaction_name}}</p>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}}ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n"},
     render    = window.requestAnimationFrame || util.delay,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
@@ -240,7 +238,7 @@ function view () {
 			list( target, store, templates.list_servers, {order: "name asc"});
 		}
 		else if ( hash === "transactions" ) {
-			list( target, store, templates.list_transactions, {order: "name asc"});
+			list( target, store, templates.list_transactions, {order: "application_summary.response_time desc, name asc"});
 		}
 	}
 	else {
@@ -250,8 +248,6 @@ function view () {
 
 // Public interface
 window.nrDash = {
-	grids   : grids,
-	lists   : lists,
 	stores  : stores,
 	version : "0.1.0"
 };

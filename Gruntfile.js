@@ -66,7 +66,8 @@ module.exports = function (grunt) {
 					style: "compressed"
 				},
 				files: {
-					"dist/css/style.css": "sass/style.scss"
+					"dist/css/style.css": "sass/style.scss",
+					"dist/css/templates.css": "sass/templates.scss"
 				}
 			}
 		},
@@ -97,6 +98,10 @@ module.exports = function (grunt) {
 			},
 			sass: {
 				files : "./sass/*",
+				tasks : "default"
+			},
+			templates: {
+				files : "./templates/*",
 				tasks : "default"
 			}
 		}
