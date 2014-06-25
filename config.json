@@ -7,53 +7,50 @@
 	},
 	"pills" : [
 		{
-			"name"   : "Applications",
-			"slug"   : "applications",
-			"source" : "applications",
-			"uri"    : "https://api.newrelic.com/v2/applications.json",
-			"filter" : null,
-			"links"  : [
+			"name"      : "Applications",
+			"slug"      : "applications",
+			"source"    : "applications",
+			"uri"       : "https://api.newrelic.com/v2/applications.json",
+			"instances" : [],
+			"filter"    : null,
+			"links"     : [
 				{
-					"name"   : "Hosts",
-					"slug"   : "hosts",
-					"source" : "hosts",
-					"uri"    : "https://api.newrelic.com/v2/applications/:id/hosts.json",
-					"filter" : null,
-					"links"  : []
-				},
+					"name"      : "Metrics",
+					"slug"      : "metrics",
+					"source"    : "metrics",
+					"uri"       : "https://api.newrelic.com/v2/applications/:id/metrics/data.json",
+					"instances" : [],
+					"filter"    : "from=:start&to=:end",
+					"links"     : []
+				}
+			]
+		},
+		{
+			"name"      : "Servers",
+			"slug"      : "servers",
+			"source"    : "servers",
+			"uri"       : "https://api.newrelic.com/v2/servers.json",
+			"instances" : [],
+			"filter"    : null,
+			"links"     : [
 				{
 					"name"   : "Metrics",
 					"slug"   : "metrics",
 					"source" : "metrics",
-					"uri"    : "https://api.newrelic.com/v2/applications/:id/metrics/data.json",
+					"uri"    : "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
 					"filter" : "from=:start&to=:end",
-					"links"  : []
-				},
-				{
-					"name"   : "Instances",
-					"slug"   : "instances",
-					"source" : "instances",
-					"uri"    : "https://api.newrelic.com/v2/applications/:id/instances.json",
-					"filter" : null,
 					"links"  : []
 				}
 			]
 		},
 		{
-			"name"   : "Servers",
-			"slug"   : "servers",
-			"source" : "servers",
-			"uri"    : "https://api.newrelic.com/v2/servers.json",
-			"filter" : null,
-			"links"  : []
-		},
-		{
-			"name"   : "Transactions",
-			"slug"   : "transactions",
-			"source" : "key_transactions",
-			"uri"    : "https://api.newrelic.com/v2/key_transactions.json",
-			"filter" : null,
-			"links"  : []
+			"name"      : "Transactions",
+			"slug"      : "transactions",
+			"source"    : "key_transactions",
+			"uri"       : "https://api.newrelic.com/v2/key_transactions.json",
+			"instances" : [],
+			"filter"    : null,
+			"links"     : []
 		}
 	]
 }
