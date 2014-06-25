@@ -34,12 +34,13 @@
 			"filter"    : null,
 			"links"     : [
 				{
-					"name"   : "Metrics",
-					"slug"   : "metrics",
-					"source" : "metrics",
-					"uri"    : "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
-					"filter" : "from=:start&to=:end",
-					"links"  : []
+					"name"      : "Metrics",
+					"slug"      : "metrics",
+					"source"    : "metrics",
+					"uri"       : "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
+					"instances" : [],
+					"filter"    : "from=:start&to=:end",
+					"links"     : []
 				}
 			]
 		},
