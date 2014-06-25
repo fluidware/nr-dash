@@ -1,4 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Lato:300italic,700italic,300,700);
+@import url(https://fonts.googleapis.com/css?family=Open+Sans:300italic,600italic,300,600);
 
 html,
 body {
@@ -7,7 +7,7 @@ body {
 
 body {
 	background: #e5e5e5;
-	font: 16px Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #000;
 	margin: 0 0 0 0;
 	padding: 0 0 0 0;
@@ -28,14 +28,13 @@ a {
 }
 
 header {
-	background: #fff;
-	padding: 10px;
-	text-align: center;
+	z-index: 3;
+	position: absolute;
+	top: 10px;
+	left: 10px;
 
-	h1 {
-		clear: both;
-		margin: 0.25em 0 0.25em 0;
-		text-align: left;
+	img {
+		height: 20px;
 	}
 }
 
@@ -62,14 +61,6 @@ header div.container,
 article {
 	margin: 0 auto 0 auto;
 	width: 1120px;
-}
-
-header {
-	display: none;
-
-	h1 {
-		font-weight: normal;
-	}
 }
 
 footer {
@@ -110,11 +101,11 @@ ul.pills {
 		border-bottom: 2px solid #f5f5f5;
 
 		&.active {
-			border-bottom: 2px solid #ccc;
+			border-bottom: 2px solid #01203D;
 		}
 
 		&:hover {
-			border-bottom: 2px solid #1BC322;
+			border-bottom: 2px solid #0F5699;
 
 			a {
 				color: #000;
@@ -160,10 +151,10 @@ section.copy {
 footer,
 article {
 	a {
-		color: #1BC322;
+		color: #0F5699;
 
 		&:hover {
-			color: #777;
+			color: #01203D;
 		}
 	}
 }

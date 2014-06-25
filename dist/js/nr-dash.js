@@ -9,10 +9,11 @@
  * @link http://fluidware.com
  * @version 0.1.1
  */
-( function ( document, window, keigai ) {
+( function ( document, window, keigai, dimple ) {
 "use strict";
 
 var store     = keigai.store,
+    grid      = keigai.grid,
     list      = keigai.list,
     util      = keigai.util,
     $         = util.$,
@@ -27,12 +28,54 @@ var store     = keigai.store,
     headers   = {},
     config    = {},
     stores    = {},
-    templates = {"list_applications":"<div id=\"{{key}}\">\n\t<strong class=\"{{health_status}}\">{{name}}</strong>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n","list_servers":"<div id=\"{{key}}\">\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n","list_transactions":"<div>\n\t<h3>{{name}}</h3>\n\t<p>{{transaction_name}}</p>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n"},
+    templates = {"list_applications":"<div>\n\t<strong class=\"{{health_status}}\">{{name}}</strong>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput (RPM)</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n","list_servers":"<div>\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n"},
     render    = window.requestAnimationFrame || util.delay,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
     NOTHASH   = /.*\#/,
     OPTIONS, DEFAULT;
+
+/**
+ * Chart factory
+ *
+ * @method chart
+ * @param  {String} target  Target Element
+ * @param  {Object} data    Data for the chart
+ * @param  {Object} options [Optional] Chart options / descriptor
+ * @return {Object}         keigai Deferred
+ */
+function chart ( target, data, options ) {
+	options    = options || {};
+	var defer  = util.defer(),
+	    width  = options.width  || 600,
+	    height = options.height || 400;
+
+	render( function () {
+		var el, dSvg, dChart;
+
+		try {
+			el     = element.create( "div", {"class": "chart"}, target );
+			dSvg   = dimple.newSvg( "#" + el.id, width, height );
+			dChart = new dimple.chart( dSvg, data || [] );
+
+			if ( hash === "applications" ) {
+
+			}
+			else if ( hash === "servers" ) {
+				
+			}
+
+			log( "Generated chart" );
+
+			defer.resolve( dChart );
+		}
+		catch ( e ) {
+			defer.reject ( e );
+		}
+	} );
+
+	return defer;
+}
 
 /**
  * Navigation click listener
@@ -219,6 +262,41 @@ function init () {
 }
 
 /**
+ * Transform data for charting
+ *
+ * @method transform
+ * @param  {Array} data Data to transform
+ * @return {Object}     keigai Deferred
+ */
+function transform ( data ) {
+	var defer = util.defer(),
+	    key   = "application_summary";
+
+	log( "Transforming data for '" + hash + "'" );
+
+	try {
+		if ( hash === "servers" ) {
+			key = "summary";
+		}
+
+		defer.resolve( data.map( function ( i ) {
+			var obj = i[key];
+
+			obj.id        = i.id;
+			obj.name      = i.name;
+			obj.timestamp = i.last_reported_at;
+
+			return obj;
+		} ) );
+	}
+	catch ( e ) {
+		defer.reject( e );
+	}
+
+	return defer;
+}
+
+/**
  * Renders the view
  *
  * @method view
@@ -227,31 +305,62 @@ function init () {
 function view () {
 	var store  = stores[hash],
 	    target = $( "#" + hash )[0],
-	    callback;
+	    callback, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
 		log( "Rendering '" + hash + "'" );
 
-		if ( hash === "applications" ) {
-			callback = function ( el ) {
-				var rec = store.get( element.data( el, "key" ).toString() );
+		if ( /applications|servers/.test( hash ) ) {
+			if ( hash === "applications" ) {
+				order    = "application_summary.response_time desc, name asc";
 
-				if ( rec.data.application_summary === undefined || rec.data.application_summary.apdex_score === null ) {
-					render( function () {
-						array.each( element.find( el, ".metric" ), function ( i ) {
-							element.klass( i, "hidden" );
+				callback = function ( el ) {
+					var rec = store.get( element.data( el, "key" ).toString() );
+
+					if ( rec.data.application_summary === undefined || rec.data.application_summary.apdex_score === null ) {
+						render( function () {
+							array.each( element.find( el, ".metric" ), function ( i ) {
+								element.klass( i, "hidden" );
+							} );
 						} );
-					} );
-				}
-			};
+					}
+				};
+			}
+			else {
+				order = "summary.memory desc, name asc";
+			}
 
-			list( target, store, templates.list_applications, {callback: callback, order: "application_summary.response_time desc, name asc"} );
-		}
-		else if ( hash === "servers" ) {
-			list( target, store, templates.list_servers, {order: "summary.memory desc, name asc"} );
+			render( function () {
+				// Creating DataList
+				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
+
+				// Creating chart(s)
+				transform( store.dump() ).then( function ( data ) {
+					chart( target, data ).then( function () {
+						log( "Rendered charts for '" + hash + "'" );
+					}, function ( e ) {
+						log( "Failed to render charts for '" + hash + "'" );
+						error( e );
+					} );
+				}, function ( e ) {
+					error( e );
+				} );
+			} );
 		}
 		else if ( hash === "transactions" ) {
-			list( target, store, templates.list_transactions, {order: "application_summary.response_time desc, name asc"} );
+			fields = ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
+			order  = "application_summary.response_time desc, name asc";
+
+			callback = function ( el ) {
+				var target = element.find( el, "span.transaction_name" )[0],
+				    text   = element.text( target );
+
+				element.html( target, "<a title=\"" + text + "\" class=\"tooltip\">" + text + "</a>" );
+			};
+
+			render( function () {
+				grid( target, store, fields, fields, {callback: callback, order: order}, true );
+			} );
 		}
 	}
 	else {
@@ -271,4 +380,4 @@ init().then( function () {
 }, function () {
 	error( "nr-dash failed to start" );
 } );
-} )( document, window, keigai );
+} )( document, window, keigai, dimple );

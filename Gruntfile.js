@@ -38,12 +38,14 @@ module.exports = function (grunt) {
 				src : [
 					"<banner>",
 					"src/intro.js",
+					"src/chart.js",
 					"src/click.js",
 					"src/error.js",
 					"src/events.js",
 					"src/generate.js",
 					"src/hashchange.js",
 					"src/init.js",
+					"src/transform.js",
 					"src/view.js",
 					"src/interface.js",
 					"src/outro.js"

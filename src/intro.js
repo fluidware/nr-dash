@@ -1,7 +1,8 @@
-( function ( document, window, keigai ) {
+( function ( document, window, keigai, dimple ) {
 "use strict";
 
 var store     = keigai.store,
+    grid      = keigai.grid,
     list      = keigai.list,
     util      = keigai.util,
     $         = util.$,
