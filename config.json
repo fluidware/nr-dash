@@ -12,6 +12,7 @@
 			"source"    : "applications",
 			"uri"       : "https://api.newrelic.com/v2/applications.json",
 			"instances" : [],
+			"names"     : [],
 			"filter"    : null,
 			"links"     : [
 				{
@@ -20,6 +21,7 @@
 					"source"    : "metrics",
 					"uri"       : "https://api.newrelic.com/v2/applications/:id/metrics/data.json",
 					"instances" : [],
+					"names"     : [],
 					"filter"    : "from=:start&to=:end",
 					"links"     : []
 				}
@@ -31,6 +33,7 @@
 			"source"    : "servers",
 			"uri"       : "https://api.newrelic.com/v2/servers.json",
 			"instances" : [],
+			"names"     : [],
 			"filter"    : null,
 			"links"     : [
 				{
@@ -38,7 +41,8 @@
 					"slug"      : "metrics",
 					"source"    : "metrics",
 					"uri"       : "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
-					"instances" : [],
+					"instances" : ["FS-D01.fluidware.com", "FR-M01"],
+					"names"     : [],
 					"filter"    : "from=:start&to=:end",
 					"links"     : []
 				}
@@ -50,6 +54,7 @@
 			"source"    : "key_transactions",
 			"uri"       : "https://api.newrelic.com/v2/key_transactions.json",
 			"instances" : [],
+			"names"     : [],
 			"filter"    : null,
 			"links"     : []
 		}

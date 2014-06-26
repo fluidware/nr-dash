@@ -13,8 +13,8 @@ function hashchange ( ev ) {
 	    $oldItem = oldHash ? $( "a[href='#" + oldHash + "']" )[0] : null,
 	    $newItem = newHash ? $( "a[href='#" + newHash + "']" )[0] : null;
 
-	ev.preventDefault();
-	ev.stopPropagation();
+	prevent( ev );
+	stop( ev );
 
 	if ( $oldItem && $oldDiv ) {
 		element.klass( $oldItem.parentNode, "active", false );

@@ -1,4 +1,4 @@
-( function ( document, window, keigai, dimple ) {
+( function ( document, window, keigai, moment, dimple ) {
 "use strict";
 
 var store     = keigai.store,
@@ -11,6 +11,7 @@ var store     = keigai.store,
     log       = util.log,
     stop      = util.stop,
     prevent   = util.prevent,
+    request   = util.request,
     target    = util.target,
     when      = util.when,
     hash      = document.location.hash.replace( "#", "" ),

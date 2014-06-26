@@ -18,6 +18,7 @@
 	"eqnull": true,
 	"expr": true,
 	"node": true,
+	"evil": true,
 	"globals": {
 		"document": true,
 		"window": true,

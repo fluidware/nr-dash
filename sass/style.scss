@@ -29,7 +29,7 @@ a {
 
 header {
 	z-index: 3;
-	position: absolute;
+	position: fixed;
 	top: 10px;
 	left: 10px;
 
@@ -64,7 +64,6 @@ article {
 }
 
 footer {
-	margin: 3em 0 3em 0;
 	text-align: center;
 	width: 100%;
 	clear: both;

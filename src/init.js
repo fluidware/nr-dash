@@ -7,7 +7,7 @@
 function init () {
 	var defer = util.defer();
 
-	util.request( "config" ).then( function ( arg ) {
+	request( "config" ).then( function ( arg ) {
 		if ( !arg.keys.api ) {
 			error( new Error( "API key not found" ) );
 		}

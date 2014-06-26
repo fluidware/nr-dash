@@ -4,4 +4,4 @@ init().then( function () {
 }, function () {
 	error( "nr-dash failed to start" );
 } );
-} )( document, window, keigai, dimple );
+} )( document, window, keigai, moment, dimple );

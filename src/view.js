@@ -33,20 +33,8 @@ function view () {
 			}
 
 			render( function () {
-				// Creating DataList
 				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
-
-				// Creating chart(s)
-				transform( store.dump() ).then( function ( data ) {
-					chart( target, data ).then( function () {
-						log( "Rendered charts for '" + hash + "'" );
-					}, function ( e ) {
-						log( "Failed to render charts for '" + hash + "'" );
-						error( e );
-					} );
-				}, function ( e ) {
-					error( e );
-				} );
+				metrics();
 			} );
 		}
 		else if ( hash === "transactions" ) {

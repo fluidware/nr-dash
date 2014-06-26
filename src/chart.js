@@ -8,33 +8,49 @@
  * @return {Object}         keigai Deferred
  */
 function chart ( target, data, options ) {
-	options    = options || {};
-	var defer  = util.defer(),
-	    width  = options.width  || 600,
-	    height = options.height || 400;
+	options       = options || {};
+	var defer     = util.defer(),
+	    deferreds = [],
+	    width     = options.width  || 600,
+	    height    = options.height || 400;
 
 	render( function () {
-		var el, dSvg, dChart;
+		var charts = [];
 
-		try {
-			el     = element.create( "div", {"class": "chart"}, target );
-			dSvg   = dimple.newSvg( "#" + el.id, width, height );
-			dChart = new dimple.chart( dSvg, data || [] );
-
-			if ( hash === "applications" ) {
-
-			}
-			else if ( hash === "servers" ) {
-				
-			}
-
-			log( "Generated chart" );
-
-			defer.resolve( dChart );
+		if ( hash === "applications" ) {
+			charts.push( {name: "Response time"} );
 		}
-		catch ( e ) {
-			defer.reject ( e );
+		else if ( hash === "servers" ) {
+
 		}
+
+		array.each( charts, function ( i ) {
+			var defer = util.defer(),
+			    el, dSvg, dChart;
+
+			deferreds.push( defer );
+
+			try {
+				el     = element.create( "div", {"class": "chart"}, target );
+				dSvg   = dimple.newSvg( "#" + el.id, width, height );
+				dChart = new dimple.chart( dSvg, data || [] );
+
+				// do something based on 'i'
+
+				defer.resolve( dChart );
+			}
+			catch ( e ) {
+				defer.reject ( e );
+			}
+		} );
+
+		when( deferreds ).then( function () {
+			log( "Rendered chart(s)" );
+			defer.resolve( true );
+		}, function ( e ) {
+			log( "Failed to rendered chart(s)" );
+			defer.reject( e );
+		} );
 	} );
 
 	return defer;

@@ -9,7 +9,7 @@
  * @link http://fluidware.com
  * @version 0.1.1
  */
-( function ( document, window, keigai, dimple ) {
+( function ( document, window, keigai, moment, dimple ) {
 "use strict";
 
 var store     = keigai.store,
@@ -22,6 +22,7 @@ var store     = keigai.store,
     log       = util.log,
     stop      = util.stop,
     prevent   = util.prevent,
+    request   = util.request,
     target    = util.target,
     when      = util.when,
     hash      = document.location.hash.replace( "#", "" ),
@@ -45,33 +46,49 @@ var store     = keigai.store,
  * @return {Object}         keigai Deferred
  */
 function chart ( target, data, options ) {
-	options    = options || {};
-	var defer  = util.defer(),
-	    width  = options.width  || 600,
-	    height = options.height || 400;
+	options       = options || {};
+	var defer     = util.defer(),
+	    deferreds = [],
+	    width     = options.width  || 600,
+	    height    = options.height || 400;
 
 	render( function () {
-		var el, dSvg, dChart;
+		var charts = [];
 
-		try {
-			el     = element.create( "div", {"class": "chart"}, target );
-			dSvg   = dimple.newSvg( "#" + el.id, width, height );
-			dChart = new dimple.chart( dSvg, data || [] );
-
-			if ( hash === "applications" ) {
-
-			}
-			else if ( hash === "servers" ) {
-				
-			}
-
-			log( "Generated chart" );
-
-			defer.resolve( dChart );
+		if ( hash === "applications" ) {
+			charts.push( {name: "Response time"} );
 		}
-		catch ( e ) {
-			defer.reject ( e );
+		else if ( hash === "servers" ) {
+
 		}
+
+		array.each( charts, function ( i ) {
+			var defer = util.defer(),
+			    el, dSvg, dChart;
+
+			deferreds.push( defer );
+
+			try {
+				el     = element.create( "div", {"class": "chart"}, target );
+				dSvg   = dimple.newSvg( "#" + el.id, width, height );
+				dChart = new dimple.chart( dSvg, data || [] );
+
+				// do something based on 'i'
+
+				defer.resolve( dChart );
+			}
+			catch ( e ) {
+				defer.reject ( e );
+			}
+		} );
+
+		when( deferreds ).then( function () {
+			log( "Rendered chart(s)" );
+			defer.resolve( true );
+		}, function ( e ) {
+			log( "Failed to rendered chart(s)" );
+			defer.reject( e );
+		} );
 	} );
 
 	return defer;
@@ -207,8 +224,8 @@ function hashchange ( ev ) {
 	    $oldItem = oldHash ? $( "a[href='#" + oldHash + "']" )[0] : null,
 	    $newItem = newHash ? $( "a[href='#" + newHash + "']" )[0] : null;
 
-	ev.preventDefault();
-	ev.stopPropagation();
+	prevent( ev );
+	stop( ev );
 
 	if ( $oldItem && $oldDiv ) {
 		element.klass( $oldItem.parentNode, "active", false );
@@ -237,7 +254,7 @@ function hashchange ( ev ) {
 function init () {
 	var defer = util.defer();
 
-	util.request( "config" ).then( function ( arg ) {
+	request( "config" ).then( function ( arg ) {
 		if ( !arg.keys.api ) {
 			error( new Error( "API key not found" ) );
 		}
@@ -257,6 +274,62 @@ function init () {
 	}, function ( e ) {
 		defer.reject( e );
 	} );
+
+	return defer;
+}
+
+/**
+ * Retrieves metrics, chains charts
+ *
+ * @method metrics
+ * @return {Undefined} undefined
+ */
+function metrics () {
+	var start     = moment().subtract( "days", 7 ).startOf( "day" ).toISOString(),
+	    end       = moment().endOf( "day" ).toISOString(),
+	    lhash     = hash,
+	    defer     = util.defer(),
+	    deferreds = [],
+	    filter, metric;
+
+	metric = config.pills.filter(function( i ) {
+		return i.slug === hash;
+	} )[0].links.filter( function ( i ) {
+		return i.slug === "metrics";
+	} );
+
+	if ( metric !== undefined && metric[0] !== undefined ) {
+		if ( metric[0].instances.length === 0 ) {
+			defer.resolve( false );
+		}
+		else {
+			filter = new Function ( "i", "return /^" + metric[0].instances.join( "|" ) + "$/i.test( i );" );
+
+			stores[hash].select( {name: filter } ).then( function ( recs ) {
+				array.each( recs, function ( i ) {
+					var querystring = "?" + metric[0].filter.replace( ":start", start ).replace( ":end", end ) + "&names[]=" + metric[0].names.join( "&names[]=" );
+
+					deferreds.push( request( metric[0].uri.replace( ":id", i.key ) + querystring, "GET", null, null, null, headers ) );
+				} );
+
+				when( deferreds ).then( function ( args ) {
+					var data = array.mingle( recs, args );
+					
+					if ( hash === lhash ) {
+						// Chart!
+						defer.resolve( true );
+					}
+					else {
+						defer.reject( new Error( "Hash has changed, data is stale" ) );
+					}
+				}, function ( e ) {
+					defer.reject( e );
+				} );
+			}, function ( e ) {
+				defer.reject( e );
+			} );
+		}
+	}
 
 	return defer;
 }
@@ -331,20 +404,8 @@ function view () {
 			}
 
 			render( function () {
-				// Creating DataList
 				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
-
-				// Creating chart(s)
-				transform( store.dump() ).then( function ( data ) {
-					chart( target, data ).then( function () {
-						log( "Rendered charts for '" + hash + "'" );
-					}, function ( e ) {
-						log( "Failed to render charts for '" + hash + "'" );
-						error( e );
-					} );
-				}, function ( e ) {
-					error( e );
-				} );
+				metrics();
 			} );
 		}
 		else if ( hash === "transactions" ) {
@@ -380,4 +441,4 @@ init().then( function () {
 }, function () {
 	error( "nr-dash failed to start" );
 } );
-} )( document, window, keigai, dimple );
+} )( document, window, keigai, moment, dimple );
