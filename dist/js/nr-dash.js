@@ -60,16 +60,21 @@ function chart ( target, data, options ) {
 			dChart = new dimple.chart( dSvg, data || [] );
 
 			dChart.setBounds( 60, 30, 505, 305 );
-			x = dChart.addCategoryAxis("x", "time" );
 
-			/*x = dChart.timeField( "x", "time" );
-			x.dateParseFormat = "%I:%M%p";
-			x.addOrderRule( "timeUnix" );*/
+			x = dChart.addCategoryAxis( "x", "time" );
+			x.addOrderRule( "unix" );
+			x.title = null;
 
-			dChart.addMeasureAxis( "y", "value" );
+			y = dChart.addMeasureAxis( "y", "value" );
+
+			if ( options.yTitle ) {
+				y.title = options.yTitle;
+			}
+
 			s = dChart.addSeries( "name", dimple.plot.line );
 			s.interpolation = "cardinal";
-			dChart.addLegend(60, 10, 500, 20, "right" );
+
+			dChart.addLegend( 60, 10, 500, 20, "right" );
 			dChart.draw();
 
 			defer.resolve( dChart );
@@ -299,7 +304,8 @@ function metrics () {
 				} );
 
 				when( deferreds ).then( function ( args ) {
-					var data = {};
+					var data = {},
+					    zone = new Date().getTimezoneOffset();
 					
 					if ( hash === lhash ) {
 						array.each( array.mingle( recs, args.map( function ( i ) { return i.metric_data.metrics; } ) ), function ( i ) {
@@ -311,7 +317,7 @@ function metrics () {
 								}
 
 								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: s.from, value: s.values.per_second || s.values.average_value } );
+									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), unix: moment.utc( s.from ).unix(), value: s.values.per_second || s.values.average_value } );
 								} );
 							} );
 						} );
@@ -328,41 +334,6 @@ function metrics () {
 				defer.reject( e );
 			} );
 		}
-	}
-
-	return defer;
-}
-
-/**
- * Transform data for charting
- *
- * @method transform
- * @param  {Array} data Data to transform
- * @return {Object}     keigai Deferred
- */
-function transform ( data ) {
-	var defer = util.defer(),
-	    key   = "application_summary";
-
-	log( "Transforming data for '" + hash + "'" );
-
-	try {
-		if ( hash === "servers" ) {
-			key = "summary";
-		}
-
-		defer.resolve( data.map( function ( i ) {
-			var obj = i[key];
-
-			obj.id        = i.id;
-			obj.name      = i.name;
-			obj.timestamp = i.last_reported_at;
-
-			return obj;
-		} ) );
-	}
-	catch ( e ) {
-		defer.reject( e );
 	}
 
 	return defer;
@@ -408,7 +379,7 @@ function view () {
 					var deferreds = [];
 
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i] ) );
+						deferreds.push( chart( target, data[i], {yTitle: i} ) );
 					} );
 
 					when( deferreds ).then( function () {

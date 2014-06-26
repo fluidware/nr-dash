@@ -38,7 +38,7 @@ function view () {
 					var deferreds = [];
 
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i] ) );
+						deferreds.push( chart( target, data[i], {yTitle: i} ) );
 					} );
 
 					when( deferreds ).then( function () {

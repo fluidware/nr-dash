@@ -31,7 +31,8 @@ function metrics () {
 				} );
 
 				when( deferreds ).then( function ( args ) {
-					var data = {};
+					var data = {},
+					    zone = new Date().getTimezoneOffset();
 					
 					if ( hash === lhash ) {
 						array.each( array.mingle( recs, args.map( function ( i ) { return i.metric_data.metrics; } ) ), function ( i ) {
@@ -43,7 +44,7 @@ function metrics () {
 								}
 
 								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: s.from, value: s.values.per_second || s.values.average_value } );
+									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), unix: moment.utc( s.from ).unix(), value: s.values.per_second || s.values.average_value } );
 								} );
 							} );
 						} );

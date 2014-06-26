@@ -22,16 +22,21 @@ function chart ( target, data, options ) {
 			dChart = new dimple.chart( dSvg, data || [] );
 
 			dChart.setBounds( 60, 30, 505, 305 );
-			x = dChart.addCategoryAxis("x", "time" );
 
-			/*x = dChart.timeField( "x", "time" );
-			x.dateParseFormat = "%I:%M%p";
-			x.addOrderRule( "timeUnix" );*/
+			x = dChart.addCategoryAxis( "x", "time" );
+			x.addOrderRule( "unix" );
+			x.title = null;
 
-			dChart.addMeasureAxis( "y", "value" );
+			y = dChart.addMeasureAxis( "y", "value" );
+
+			if ( options.yTitle ) {
+				y.title = options.yTitle;
+			}
+
 			s = dChart.addSeries( "name", dimple.plot.line );
 			s.interpolation = "cardinal";
-			dChart.addLegend(60, 10, 500, 20, "right" );
+
+			dChart.addLegend( 60, 10, 500, 20, "right" );
 			dChart.draw();
 
 			defer.resolve( dChart );
