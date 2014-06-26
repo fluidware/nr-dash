@@ -1,5 +1,5 @@
 /**
- * Retrieves metrics, chains charts
+ * Retrieves metrics
  *
  * @method metrics
  * @return {Undefined} undefined

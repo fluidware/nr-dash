@@ -41,6 +41,8 @@ ul.list {
 #servers {
 	ul.list {
 		width: 30%;
+		float: left;
+		margin-right: 80px;
 
 		li {
 			padding: 10px;
@@ -50,6 +52,10 @@ ul.list {
 				border-bottom: 0px;
 			}
 		}
+	}
+
+	div.chart {
+		margin-bottom: 40px;
 	}
 }
 

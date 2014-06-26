@@ -34,7 +34,21 @@ function view () {
 
 			render( function () {
 				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
-				metrics();
+				metrics().then( function ( data ) {
+					var deferreds = [];
+
+					array.each( array.keys( data ), function ( i ) {
+						deferreds.push( chart( target, data[i] ) );
+					} );
+
+					when( deferreds ).then( function () {
+						log( "Rendered charts for '" + hash + "'" );
+					}, function () {
+						log( "Failed to render charts for '" + hash + "'" );
+					} );
+				}, function ( e ) {
+					error( e );
+				} );
 			} );
 		}
 		else if ( hash === "transactions" ) {

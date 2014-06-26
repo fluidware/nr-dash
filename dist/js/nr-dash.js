@@ -46,49 +46,37 @@ var store     = keigai.store,
  * @return {Object}         keigai Deferred
  */
 function chart ( target, data, options ) {
-	options       = options || {};
-	var defer     = util.defer(),
-	    deferreds = [],
-	    width     = options.width  || 600,
-	    height    = options.height || 400;
+	options    = options || {};
+	var defer  = util.defer(),
+	    width  = options.width  || 600,
+	    height = options.height || 400;
 
 	render( function () {
-		var charts = [];
+		var el, dSvg, dChart, x, y, s;
 
-		if ( hash === "applications" ) {
-			charts.push( {name: "Response time"} );
+		try {
+			el     = element.create( "div", {"class": "chart"}, target );
+			dSvg   = dimple.newSvg( "#" + el.id, width, height );
+			dChart = new dimple.chart( dSvg, data || [] );
+
+			dChart.setBounds( 60, 30, 505, 305 );
+			x = dChart.addCategoryAxis("x", "time" );
+
+			/*x = dChart.timeField( "x", "time" );
+			x.dateParseFormat = "%I:%M%p";
+			x.addOrderRule( "timeUnix" );*/
+
+			dChart.addMeasureAxis( "y", "value" );
+			s = dChart.addSeries( "name", dimple.plot.line );
+			s.interpolation = "cardinal";
+			dChart.addLegend(60, 10, 500, 20, "right" );
+			dChart.draw();
+
+			defer.resolve( dChart );
 		}
-		else if ( hash === "servers" ) {
-
+		catch ( e ) {
+			defer.reject ( e );
 		}
-
-		array.each( charts, function ( i ) {
-			var defer = util.defer(),
-			    el, dSvg, dChart;
-
-			deferreds.push( defer );
-
-			try {
-				el     = element.create( "div", {"class": "chart"}, target );
-				dSvg   = dimple.newSvg( "#" + el.id, width, height );
-				dChart = new dimple.chart( dSvg, data || [] );
-
-				// do something based on 'i'
-
-				defer.resolve( dChart );
-			}
-			catch ( e ) {
-				defer.reject ( e );
-			}
-		} );
-
-		when( deferreds ).then( function () {
-			log( "Rendered chart(s)" );
-			defer.resolve( true );
-		}, function ( e ) {
-			log( "Failed to rendered chart(s)" );
-			defer.reject( e );
-		} );
 	} );
 
 	return defer;
@@ -279,7 +267,7 @@ function init () {
 }
 
 /**
- * Retrieves metrics, chains charts
+ * Retrieves metrics
  *
  * @method metrics
  * @return {Undefined} undefined
@@ -416,7 +404,21 @@ function view () {
 
 			render( function () {
 				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
-				metrics();
+				metrics().then( function ( data ) {
+					var deferreds = [];
+
+					array.each( array.keys( data ), function ( i ) {
+						deferreds.push( chart( target, data[i] ) );
+					} );
+
+					when( deferreds ).then( function () {
+						log( "Rendered charts for '" + hash + "'" );
+					}, function () {
+						log( "Failed to render charts for '" + hash + "'" );
+					} );
+				}, function ( e ) {
+					error( e );
+				} );
 			} );
 		}
 		else if ( hash === "transactions" ) {
