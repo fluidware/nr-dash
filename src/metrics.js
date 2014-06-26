@@ -5,9 +5,7 @@
  * @return {Undefined} undefined
  */
 function metrics () {
-	var start     = moment().subtract( "days", 7 ).startOf( "day" ).toISOString(),
-	    end       = moment().endOf( "day" ).toISOString(),
-	    lhash     = hash,
+	var lhash     = hash,
 	    defer     = util.defer(),
 	    deferreds = [],
 	    filter, metric;
@@ -20,24 +18,37 @@ function metrics () {
 
 	if ( metric !== undefined && metric[0] !== undefined ) {
 		if ( metric[0].instances.length === 0 ) {
-			defer.resolve( false );
+			defer.resolve( {} );
 		}
 		else {
 			filter = new Function ( "i", "return /^" + metric[0].instances.join( "|" ) + "$/i.test( i );" );
 
 			stores[hash].select( {name: filter } ).then( function ( recs ) {
 				array.each( recs, function ( i ) {
-					var querystring = "?" + metric[0].filter.replace( ":start", start ).replace( ":end", end ) + "&names[]=" + metric[0].names.join( "&names[]=" );
+					var querystring = "?names[]=" + metric[0].names.join( "&names[]=" );
 
 					deferreds.push( request( metric[0].uri.replace( ":id", i.key ) + querystring, "GET", null, null, null, headers ) );
 				} );
 
 				when( deferreds ).then( function ( args ) {
-					var data = array.mingle( recs, args );
+					var data = {};
 					
 					if ( hash === lhash ) {
-						// Chart!
-						defer.resolve( true );
+						array.each( array.mingle( recs, args.map( function ( i ) { return i.metric_data.metrics; } ) ), function ( i ) {
+							array.each( i[1], function ( d ) {
+								var name = d.name.split( "/" )[1];
+
+								if ( data[name] === undefined ) {
+									data[name] = [];
+								}
+
+								array.each( d.timeslices, function ( s ) {
+									data[name].push( {name: i[0].data.name, time: s.from, value: s.values.per_second || s.values.average_value } );
+								} );
+							} );
+						} );
+
+						defer.resolve( data );
 					}
 					else {
 						defer.reject( new Error( "Hash has changed, data is stale" ) );
