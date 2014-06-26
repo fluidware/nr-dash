@@ -8,7 +8,8 @@ function generate () {
 	var defer    = util.defer(),
 	    sections = array.keySort( config.pills, "name asc" ),
 	    pills    = [],
-	    copy     = [];
+	    copy     = [],
+	    expires  = config.expire && !isNaN( config.expire );
 
 	array.each(sections, function ( i ) {
 		pills.push( "<li><a href=\"#" + i.slug + "\">" + i.name + "</a></li>" );
@@ -33,8 +34,13 @@ function generate () {
 			var lstore;
 
 			if ( i.uri ) {
-				lstore = store( null, {id: i.slug, expires: config.expire * 1000, headers: headers, key: "id", source: i.source} );
+				lstore = store( null, {id: i.slug, headers: headers, key: "id", source: i.source} );
 				deferreds.push( lstore.setUri( i.uri ) );
+
+				if ( expires ) {
+					lstore.setExpires( config.expire * 1000 );
+				}
+
 				stores[i.slug] = lstore;
 			}
 		} );

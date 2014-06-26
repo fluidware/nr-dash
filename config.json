@@ -1,6 +1,6 @@
 {
 	"hostname" : "localhost",
-	"expire" : 300,
+	"expire" : 30,
 	"keys" : {
 		"api"  : null,
 		"data" : null
