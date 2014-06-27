@@ -48,7 +48,7 @@ var store     = keigai.store,
 function chart ( target, data, options ) {
 	options    = options || {};
 	var defer  = util.defer(),
-	    width  = options.width  || 600,
+	    width  = options.width  || 500,
 	    height = options.height || 400;
 
 	render( function () {
@@ -65,7 +65,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 60, 30, 505, 305 );
+			dChart.setBounds( 60, 30, ( width - 95 ), 305 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -84,7 +84,7 @@ function chart ( target, data, options ) {
 				dChart.id = options.id;
 			}
 
-			dChart.addLegend( 60, 10, 500, 20, "right" );
+			dChart.addLegend( 60, 10, ( width - 100 ), 20, "right" );
 			dChart.draw();
 
 			defer.resolve( dChart );
@@ -371,7 +371,8 @@ function view () {
 
 		if ( /applications|servers/.test( hash ) ) {
 			if ( hash === "applications" ) {
-				order    = "application_summary.response_time desc, name asc";
+				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"]
+				order  = "application_summary.response_time desc, name asc";
 
 				callback = function ( el ) {
 					var rec = store.get( element.data( el, "key" ).toString() );
@@ -386,21 +387,28 @@ function view () {
 				};
 			}
 			else {
-				order = "summary.memory desc, name asc";
+				fields = ["name", "summary.cpu", "summary.memory"];
+				order  = "summary.memory desc, name asc";
 			}
 
-			render( function () {
-				list( target, store, templates["list_" + hash], {callback: callback, order: order} );
-				metrics().then( function ( data ) {
-					var deferreds = [];
+			metrics().then( function ( data ) {
+				var deferreds = [];
 
-					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
+				array.each( array.keys( data ), function ( i ) {
+					deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
+				} );
+
+				when( deferreds ).then( function ( charts ) {
+					if ( charts !== null && charts.length > 0 ) {
+						log( "Rendered charts for '" + hash + "'" );
+					}
+
+					render( function () {
+						grid( target, store, fields, fields, {callback: callback, order: order}, true );
+						log( "Rendered view of '" + hash + "'" );
 					} );
 
-					when( deferreds ).then( function ( charts ) {
-						log( "Rendered charts for '" + hash + "'" );
-
+					if ( charts !== null && charts.length > 0 ) {
 						store.on( "afterSync", function () {
 							metrics().then( function ( data ) {
 								array.each( charts, function ( i ) {
@@ -414,14 +422,14 @@ function view () {
 								} );
 							} );
 						} );
+					}
 
-						log( "Bound charts and DataStore for '" + hash + "'" );
-					}, function () {
-						log( "Failed to render charts for '" + hash + "'" );
-					} );
-				}, function ( e ) {
-					error( e );
+					log( "Bound charts and DataStore for '" + hash + "'" );
+				}, function () {
+					log( "Failed to render charts for '" + hash + "'" );
 				} );
+			}, function ( e ) {
+				error( e );
 			} );
 		}
 		else if ( hash === "transactions" ) {

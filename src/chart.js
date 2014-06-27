@@ -10,7 +10,7 @@
 function chart ( target, data, options ) {
 	options    = options || {};
 	var defer  = util.defer(),
-	    width  = options.width  || 600,
+	    width  = options.width  || 500,
 	    height = options.height || 400;
 
 	render( function () {
@@ -27,7 +27,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 60, 30, 505, 305 );
+			dChart.setBounds( 60, 30, ( width - 95 ), 305 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -46,7 +46,7 @@ function chart ( target, data, options ) {
 				dChart.id = options.id;
 			}
 
-			dChart.addLegend( 60, 10, 500, 20, "right" );
+			dChart.addLegend( 60, 10, ( width - 100 ), 20, "right" );
 			dChart.draw();
 
 			defer.resolve( dChart );

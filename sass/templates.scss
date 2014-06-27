@@ -1,4 +1,21 @@
-/* Generic DataList styling */
+div.chart {
+	margin: 0 25px 25px 0;
+	float: left;
+}
+
+.grid .filter {
+	margin: 0 !important;
+}
+
+ul.header,
+ul.list {
+	span[data-field='application_summary.response_time'],
+	span[data-field='application_summary.apdex_score'],
+	span[data-field='application_summary.throughput'] {
+		text-align: center;
+	}
+}
+
 ul.list {
 	margin: 0 0 0 0;
 	padding: 0 0 0 0;
@@ -20,57 +37,26 @@ ul.list {
 				font-weight: bold;
 			}
 		}
-	}
-}
 
-#applications {
-	.green {
-		color: green;
-	}
-
-	.orange {
-		color: orange;
-	}
-
-	.red {
-		color: red;
-	}
-}
-
-#applications,
-#servers {
-	ul.list {
-		width: 30%;
-		float: left;
-		margin-right: 100px;
-
-		li {
-			padding: 10px;
-			border-bottom: 1px solid #ccc;
-
-			&:last-child {
-				border-bottom: 0px;
-			}
+		.green {
+			color: green;
 		}
-	}
 
-	div.chart {
-		margin-bottom: 50px;
-	}
-}
+		.orange {
+			color: orange;
+		}
 
-#transactions {
-	span[data-field='application_summary.response_time'],
-	span[data-field='application_summary.apdex_score'],
-	span[data-field='application_summary.throughput'] {
-		text-align: center;
-	}
+		.red {
+			color: red;
+		}
 
-	a.tooltip {
-		color : #000 !important;
-
-		&:hover {
+		a.tooltip {
 			color : #000 !important;
+
+			&:hover {
+				color : #000 !important;
+				cursor: help;
+			}
 		}
 	}
 }
