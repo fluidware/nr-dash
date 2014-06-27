@@ -14,7 +14,6 @@
 
 var store     = keigai.store,
     grid      = keigai.grid,
-    list      = keigai.list,
     util      = keigai.util,
     $         = util.$,
     array     = util.array,
@@ -29,7 +28,6 @@ var store     = keigai.store,
     headers   = {},
     config    = {},
     stores    = {},
-    templates = {"list_applications":"<div>\n\t<strong class=\"{{health_status}}\">{{name}}</strong>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput (RPM)</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n","list_servers":"<div>\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n"},
     render    = util.render,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
@@ -371,7 +369,7 @@ function view () {
 
 		if ( /applications|servers/.test( hash ) ) {
 			if ( hash === "applications" ) {
-				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"]
+				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 				order  = "application_summary.response_time desc, name asc";
 
 				callback = function ( el ) {

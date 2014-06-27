@@ -14,7 +14,7 @@ function view () {
 
 		if ( /applications|servers/.test( hash ) ) {
 			if ( hash === "applications" ) {
-				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"]
+				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 				order  = "application_summary.response_time desc, name asc";
 
 				callback = function ( el ) {

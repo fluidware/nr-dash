@@ -1,23 +1,4 @@
 module.exports = function (grunt) {
-	var fs  = require("fs"),
-	    ref = [];
-
-	// Building object structure of templates (to be embedded),
-	// doing this outside of a task for reference reasons (hence Array!)
-	(function (ref) {
-		var files = fs.readdirSync("./templates"),
-		    tmp   = {};
-
-		files.forEach( function ( i ) {
-			var name = i.replace(/\..*/, ""),
-			    data = fs.readFileSync("./templates/" + i);
-
-			tmp[name] = data.toString();
-		});
-
-		ref.push(JSON.stringify(tmp).replace(/^"|"$/g, ""));
-	})(ref);
-
 	grunt.initConfig({
 		pkg : grunt.file.readJSON("package.json"),
 		concat: {
@@ -68,17 +49,11 @@ module.exports = function (grunt) {
 					style: "compressed"
 				},
 				files: {
-					"dist/css/style.css": "sass/style.scss",
-					"dist/css/templates.css": "sass/templates.scss"
+					"dist/css/style.css": "sass/style.scss"
 				}
 			}
 		},
 		sed : {
-			"templates" : {
-				pattern : "{{TEMPLATES}}",
-				replacement : ref[0],
-				path : ["<%= concat.dist.dest %>"]
-			},
 			"version" : {
 				pattern : "{{VERSION}}",
 				replacement : "<%= pkg.version %>",

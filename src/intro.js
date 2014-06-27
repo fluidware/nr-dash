@@ -3,7 +3,6 @@
 
 var store     = keigai.store,
     grid      = keigai.grid,
-    list      = keigai.list,
     util      = keigai.util,
     $         = util.$,
     array     = util.array,
@@ -18,7 +17,6 @@ var store     = keigai.store,
     headers   = {},
     config    = {},
     stores    = {},
-    templates = {{TEMPLATES}},
     render    = util.render,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element

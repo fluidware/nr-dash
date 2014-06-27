@@ -13,11 +13,6 @@ body {
 	padding: 0 0 0 0;
 }
 
-p {
-	clear: both;
-	margin: 0 0 1em 0;
-}
-
 a {
 	text-decoration: none;
 }
@@ -48,6 +43,7 @@ nav {
 	text-align: center;
 	border-bottom: 1px solid #ccc;
 	position: fixed;
+	top: 0px;
 	width: 100%;
 	z-index: 2;
 
@@ -70,23 +66,7 @@ footer {
 }
 
 article {
-	padding: 60px;
-}
-
-h1, h2, h3, h4 {
-	margin: 0 0 0.5em 0;
-}
-
-h2 {
-	font-size: 1.6em;
-}
-
-h3 {
-	font-size: 1.3em;
-}
-
-h4 {
-	font-size: 1.1em;
+	padding-top: 60px;
 }
 
 ul.pills {
@@ -117,32 +97,12 @@ ul.pills {
 	}
 }
 
-ul.thirds {
-	display: block;
-	margin: 2em 0 0 0;
-	padding: 0 0 0 0;
-
-	li {
-		display: inline-block;
-		width: 30%;
-		margin-right: 3%;
-		vertical-align: text-top;
-
-		&:last-child {
-			margin-right: 0%;
-		}
-	}
-}
-
 section.copy {
 	padding: 20px;
 	border: 1px solid #ccc;
 	background: #fff;
 	line-height: 1.6em;
 	overflow: auto;
-}
-
-section.copy {
 	margin-bottom: 10px;
 	min-height: 150px;
 }
@@ -158,97 +118,101 @@ article {
 	}
 }
 
-#config {
-	h3 {
-		margin-top: 2em;
-		padding-top: 2em;
-		border-top: 1px solid #ccc;
-
-		&:first-child {
-			margin-top: 0;
-			padding-top: 0;
-			border-top: 0px;
-		}
-	}
-}
-
 .hidden {
 	display: none !important;
 }
 
-.pull-right {
-	float: right;
-}
-
-.pull-left {
+div.chart {
+	margin: 0 25px 25px 0;
 	float: left;
 }
 
-.border {
-	border: 1px solid #ccc;
+.grid .filter {
+	margin: 0 !important;
 }
 
-.github {
-	position: absolute;
-	top: 0;
-	right: 0;
-	z-index: 2;
+ul.header,
+ul.list {
+	span[data-field='application_summary.response_time'],
+	span[data-field='application_summary.apdex_score'],
+	span[data-field='application_summary.throughput'] {
+		text-align: center;
+	}
 }
 
-.gist {
-	font-size: 12px;
-	line-height: 1.3em;
-	margin-bottom: 2em;
+section.grid,
+ul.list {
+	clear: both;
+}
+
+ul.list {
+	margin: 0 0 0 0;
+	padding: 0 0 0 0;
+
+	li {
+		list-style: none;
+		vertical-align: text-top !important;
+
+		span.metric {
+			font-weight: normal;
+			display: block;
+
+			span.name {
+				display: inline-block;
+				width: 60%;
+			}
+
+			span.value {
+				font-weight: bold;
+			}
+		}
+
+		.green {
+			color: green;
+		}
+
+		.orange {
+			color: orange;
+		}
+
+		.red {
+			color: red;
+		}
+
+		a.tooltip {
+			color : #000 !important;
+
+			&:hover {
+				color : #000 !important;
+				cursor: help;
+			}
+		}
+	}
 }
 
 @media print, screen and (max-width: 1150px) {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: 900px;
+		width: 1050px;
 	}
 
-	article {
-		margin-top: 2em;
-	}
-}
-
-@media print, screen and (max-width: 950px) {
-	header div.container,
-	article {
-		margin: 0 auto 0 auto;
-		width: 700px;
-	}
-
-	article {
-		margin-top: 2em;
-	}
-
-	section.copy h2 {
-		margin-bottom: 20px;
+	div.chart {
+		margin: 0 auto 25px auto !important;
+		float: left;
 	}
 }
 
-@media print, screen and (max-width: 740px) {
+@media print, screen and (max-width: 1060px) {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
 		width: 600px;
 	}
 
-	article {
-		margin-top: 2em;
-	}
-
-	section.copy h2 {
-		margin-bottom: 20px;
-	}
-
-	ul.thirds {
-		li {
-			width: 100%;
-			margin: 0 0 2em 0;
-		}
+	div.chart {
+		margin: 0 auto 25px auto !important;
+		float: none !important;
 	}
 }
 
@@ -256,10 +220,15 @@ article {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: 400px;
+		width: 550px;
 	}
 
-	article {
-		margin-top: 2em;
+	header {
+		display: none !important;
+	}
+
+	div.chart {
+		margin: 0 auto 25px auto !important;
+		float: none !important;
 	}
 }
