@@ -30,7 +30,7 @@ var store     = keigai.store,
     config    = {},
     stores    = {},
     templates = {"list_applications":"<div>\n\t<strong class=\"{{health_status}}\">{{name}}</strong>\n\t<span class=\"metric response\">\n\t\t<span class=\"name\">Response Time</span>\n\t\t<span class=\"value\">{{application_summary.response_time}} ms</span>\n\t</span>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">Score</span>\n\t\t<span class=\"value\">{{application_summary.apdex_score}}</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Throughput (RPM)</span>\n\t\t<span class=\"value\">{{application_summary.throughput}}</span>\n\t</span>\n</div>\n","list_servers":"<div>\n\t<strong>{{name}}</strong>\n\t<span class=\"metric score\">\n\t\t<span class=\"name\">CPU</span>\n\t\t<span class=\"value\">{{summary.cpu}} %</span>\n\t</span>\n\t<span class=\"metric throughput\">\n\t\t<span class=\"name\">Memory</span>\n\t\t<span class=\"value\">{{summary.memory}} %</span>\n\t</span>\n</div>\n"},
-    render    = window.requestAnimationFrame || util.delay,
+    render    = util.render,
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
     NOTHASH   = /.*\#/,
@@ -58,11 +58,19 @@ function chart ( target, data, options ) {
 			el     = element.create( "div", {"class": "chart"}, target );
 			dSvg   = dimple.newSvg( "#" + el.id, width, height );
 			dChart = new dimple.chart( dSvg, data || [] );
+			dChart.defaultColors = [
+				new dimple.color("#1269B0"),
+				new dimple.color("#BD2B2B"),
+				new dimple.color("#0F5699"),
+				new dimple.color("#90C8E4"),
+				new dimple.color("#2C0905"),
+				new dimple.color("#272728")
+			];
 
 			dChart.setBounds( 60, 30, 505, 305 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
-			x.addOrderRule( "unix" );
+			x.addOrderRule( "time" );
 			x.title = null;
 
 			y = dChart.addMeasureAxis( "y", "value" );
@@ -73,6 +81,10 @@ function chart ( target, data, options ) {
 
 			s = dChart.addSeries( "name", dimple.plot.line );
 			s.interpolation = "cardinal";
+
+			if ( options.id ) {
+				dChart.id = options.id;
+			}
 
 			dChart.addLegend( 60, 10, 500, 20, "right" );
 			dChart.draw();
@@ -304,9 +316,9 @@ function metrics () {
 
 			stores[hash].select( {name: filter } ).then( function ( recs ) {
 				array.each( recs, function ( i ) {
-					var querystring = "?names[]=" + metric[0].names.join( "&names[]=" );
+					var url = metric[0].uri.replace( ":id", i.key ) + "?names[]=" + metric[0].names.join( "&names[]=" );
 
-					deferreds.push( request( metric[0].uri.replace( ":id", i.key ) + querystring, "GET", null, null, null, headers ) );
+					deferreds.push( request( url, "GET", null, null, null, headers ) );
 				} );
 
 				when( deferreds ).then( function ( args ) {
@@ -323,7 +335,7 @@ function metrics () {
 								}
 
 								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), unix: moment.utc( s.from ).unix(), value: s.values.per_second || s.values.average_value } );
+									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value } );
 								} );
 							} );
 						} );
@@ -385,11 +397,27 @@ function view () {
 					var deferreds = [];
 
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i], {yTitle: i} ) );
+						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
 					} );
 
-					when( deferreds ).then( function () {
+					when( deferreds ).then( function ( charts ) {
 						log( "Rendered charts for '" + hash + "'" );
+
+						store.on( "afterSync", function () {
+							metrics().then( function ( data ) {
+								array.each( charts, function ( i ) {
+									i.data = data[i.id];
+
+									// Only draw if visible
+									if ( store.id === hash ) {
+										// 2 second transition
+										i.draw( 2000 );
+									}
+								} );
+							} );
+						} );
+
+						log( "Bound charts and DataStore for '" + hash + "'" );
 					}, function () {
 						log( "Failed to render charts for '" + hash + "'" );
 					} );

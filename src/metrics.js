@@ -25,9 +25,9 @@ function metrics () {
 
 			stores[hash].select( {name: filter } ).then( function ( recs ) {
 				array.each( recs, function ( i ) {
-					var querystring = "?names[]=" + metric[0].names.join( "&names[]=" );
+					var url = metric[0].uri.replace( ":id", i.key ) + "?names[]=" + metric[0].names.join( "&names[]=" );
 
-					deferreds.push( request( metric[0].uri.replace( ":id", i.key ) + querystring, "GET", null, null, null, headers ) );
+					deferreds.push( request( url, "GET", null, null, null, headers ) );
 				} );
 
 				when( deferreds ).then( function ( args ) {
@@ -44,7 +44,7 @@ function metrics () {
 								}
 
 								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), unix: moment.utc( s.from ).unix(), value: s.values.per_second || s.values.average_value } );
+									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value } );
 								} );
 							} );
 						} );

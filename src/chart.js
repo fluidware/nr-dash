@@ -20,11 +20,19 @@ function chart ( target, data, options ) {
 			el     = element.create( "div", {"class": "chart"}, target );
 			dSvg   = dimple.newSvg( "#" + el.id, width, height );
 			dChart = new dimple.chart( dSvg, data || [] );
+			dChart.defaultColors = [
+				new dimple.color("#1269B0"),
+				new dimple.color("#BD2B2B"),
+				new dimple.color("#0F5699"),
+				new dimple.color("#90C8E4"),
+				new dimple.color("#2C0905"),
+				new dimple.color("#272728")
+			];
 
 			dChart.setBounds( 60, 30, 505, 305 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
-			x.addOrderRule( "unix" );
+			x.addOrderRule( "time" );
 			x.title = null;
 
 			y = dChart.addMeasureAxis( "y", "value" );
@@ -35,6 +43,10 @@ function chart ( target, data, options ) {
 
 			s = dChart.addSeries( "name", dimple.plot.line );
 			s.interpolation = "cardinal";
+
+			if ( options.id ) {
+				dChart.id = options.id;
+			}
 
 			dChart.addLegend( 60, 10, 500, 20, "right" );
 			dChart.draw();

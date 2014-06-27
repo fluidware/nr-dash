@@ -38,11 +38,27 @@ function view () {
 					var deferreds = [];
 
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i], {yTitle: i} ) );
+						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
 					} );
 
-					when( deferreds ).then( function () {
+					when( deferreds ).then( function ( charts ) {
 						log( "Rendered charts for '" + hash + "'" );
+
+						store.on( "afterSync", function () {
+							metrics().then( function ( data ) {
+								array.each( charts, function ( i ) {
+									i.data = data[i.id];
+
+									// Only draw if visible
+									if ( store.id === hash ) {
+										// 2 second transition
+										i.draw( 2000 );
+									}
+								} );
+							} );
+						} );
+
+						log( "Bound charts and DataStore for '" + hash + "'" );
 					}, function () {
 						log( "Failed to render charts for '" + hash + "'" );
 					} );
