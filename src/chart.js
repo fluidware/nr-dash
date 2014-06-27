@@ -20,14 +20,12 @@ function chart ( target, data, options ) {
 			el     = element.create( "div", {"class": "chart"}, target );
 			dSvg   = dimple.newSvg( "#" + el.id, width, height );
 			dChart = new dimple.chart( dSvg, data || [] );
-			dChart.defaultColors = [
-				new dimple.color("#1269B0"),
-				new dimple.color("#BD2B2B"),
-				new dimple.color("#0F5699"),
-				new dimple.color("#90C8E4"),
-				new dimple.color("#2C0905"),
-				new dimple.color("#272728")
-			];
+
+			if ( config.colors && config.colors.length > 0 ) {
+				dChart.defaultColors = config.colors.map( function ( i ) {
+					return new dimple.color( i );
+				} );
+			}
 
 			dChart.setBounds( 60, 30, 505, 305 );
 

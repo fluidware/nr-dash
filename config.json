@@ -5,6 +5,7 @@
 		"api"  : null,
 		"data" : null
 	},
+	"colors" : ["#1269B0", "#BD2B2B", "#0F5699", "#90C8E4", "#2C0905", "#272728"],
 	"pills" : [
 		{
 			"name"      : "Applications",
