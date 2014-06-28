@@ -463,7 +463,9 @@ function view () {
 											array.each( charts, function ( i ) {
 												try {
 													i.data = data[i.id];
-													i.draw( 2000 );
+													render( function () {
+														i.draw( 2000 );
+													} );
 												}
 												catch ( e ) {}
 											} );
