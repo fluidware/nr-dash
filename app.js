@@ -6,7 +6,7 @@ var TurtleIO = require( "turtle.io"),
     app      = new TurtleIO(),
     vhosts   = {};
 
-if ( !config.keys.api || !config.keys.data ) {
+if ( !config.api ) {
 	console.error( "Invalid configuration" );
 	process.exit( 1 );
 }
@@ -21,6 +21,8 @@ app.get( "/config", function ( req, res ) {
 
 app.start( {
 	root    : ".",
+	port    : config.port || 8000,
+	//uid     : 101, // uid of account to drop to when starting with priviledges (low port)
 	default : HOSTNAME,
 	vhosts  : vhosts
 } );

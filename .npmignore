@@ -1,8 +1,8 @@
 /.sass-cache/
 /node_modules/
 /src/
-/test/
-/templates/
+/sass/
+/src/
 .git
 .gitignore
 .jshintrc

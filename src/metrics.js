@@ -8,55 +8,76 @@ function metrics () {
 	var lhash     = hash,
 	    defer     = util.defer(),
 	    deferreds = [],
+	    host      = /\:host/,
 	    filter, metric;
 
-	metric = config.pills.filter(function( i ) {
-		return i.slug === hash;
-	} )[0].links.filter( function ( i ) {
-		return i.slug === "metrics";
-	} );
+	metric = config.pills.filter( function ( i ) {
+		return i.slug === lhash;
+	} )[0].metrics;
 
-	if ( metric !== undefined && metric[0] !== undefined ) {
-		if ( metric[0].instances.length === 0 ) {
+	if ( metric !== undefined ) {
+		if ( metric.instances.length === 0 ) {
 			defer.resolve( {} );
 		}
 		else {
-			filter = new Function ( "i", "return /^" + metric[0].instances.join( "|" ) + "$/i.test( i );" );
+			// Creating an anonymous function without lexical scope because it's probably going to a Worker
+			filter = new Function( "arg", "return /^" + metric.instances.map( function ( i ) { return string.escape( i ); } ).join( "|" ) + "$/i.test( arg );" );
 
-			stores[hash].select( {name: filter } ).then( function ( recs ) {
+			stores[lhash].select( {name: filter} ).then( function ( recs ) {
 				array.each( recs, function ( i ) {
-					var url = metric[0].uri.replace( ":id", i.key ) + "?names[]=" + metric[0].names.join( "&names[]=" );
+					var url = metric.uri.replace( ":id", i.key ) + "?names[]=" + metric.names.join( "&names[]=" ),
+					    key = string.singular( lhash ) + "_hosts";
 
-					deferreds.push( request( url, "GET", null, null, null, headers ) );
-				} );
-
-				when( deferreds ).then( function ( args ) {
-					var data = {},
-					    zone = new Date().getTimezoneOffset();
-					
-					if ( hash === lhash ) {
-						array.each( array.mingle( recs, args.map( function ( i ) { return i.metric_data.metrics; } ) ), function ( i ) {
-							array.each( i[1], function ( d ) {
-								var name = d.name.split( "/" )[1];
-
-								if ( data[name] === undefined ) {
-									data[name] = [];
-								}
-
-								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value } );
-								} );
-							} );
-						} );
-
-						defer.resolve( data );
+					if ( host.test( url ) ) {
+						if ( i.data.links !== undefined && i.data.links[key] !== undefined && i.data.links[key].length > 0 ) {
+							url = url.replace( host, i.data.links[key][0] || 0 );
+							deferreds.push( request( url, "GET", null, null, null, headers ) );
+						}
 					}
 					else {
-						defer.reject( new Error( "Hash has changed, data is stale" ) );
+						deferreds.push( request( url, "GET", null, null, null, headers ) );
 					}
-				}, function ( e ) {
-					defer.reject( e );
 				} );
+
+				if ( deferreds.length > 0 ) {
+					when( deferreds ).then( function ( args ) {
+						var data = {},
+						    zone = new Date().getTimezoneOffset();
+
+						if ( !( args instanceof Array ) ) {
+							args = [args];
+						}
+
+						if ( lhash === hash ) {
+							array.each( array.mingle( recs, args.map( function ( i ) { return i === null ? i : i.metric_data.metrics; } ) ), function ( i ) {
+								array.each( i[1], function ( d ) {
+									var split = d.name.split( "/" ),
+									    name;
+
+									name = split[1] === "Function" ? split[2] : split[1];
+
+									if ( data[name] === undefined ) {
+										data[name] = [];
+									}
+
+									array.each( d.timeslices, function ( s ) {
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+									} );
+								} );
+							} );
+
+							defer.resolve( data );
+						}
+						else {
+							defer.reject( new Error( "Hash has changed, data is stale" ) );
+						}
+					}, function ( e ) {
+						defer.reject( e );
+					} );
+				}
+				else {
+					defer.resolve( {} );
+				}
 			}, function ( e ) {
 				defer.reject( e );
 			} );

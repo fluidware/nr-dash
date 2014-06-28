@@ -1,16 +1,20 @@
 @import url(https://fonts.googleapis.com/css?family=Open+Sans:300italic,600italic,300,600);
 
+$white: #fff;
+$ten: 10px;
+$zero: 0 0 0 0;
+
 html,
 body {
 	min-height: 100%;
 }
 
 body {
-	background: #e5e5e5;
+	background: darken( $white, 10% );
 	font: 16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: #000;
-	margin: 0 0 0 0;
-	padding: 0 0 0 0;
+	color: darken( $white, 100% );
+	margin: $zero;
+	padding: $zero;
 }
 
 a {
@@ -25,23 +29,23 @@ a {
 header {
 	z-index: 3;
 	position: fixed;
-	top: 10px;
-	left: 10px;
+	top: $ten;
+	left: $ten;
 
 	img {
-		height: 20px;
+		height: $ten * 2;
 	}
 }
 
 nav,
 section.copy {
-	background: #f5f5f5;
+	background: $white;
 }
 
 nav {
 	clear: both;
 	text-align: center;
-	border-bottom: 1px solid #ccc;
+	border-bottom: $ten - 9 solid darken( $white, 20% );
 	position: fixed;
 	top: 0px;
 	width: 100%;
@@ -63,48 +67,44 @@ footer {
 	text-align: center;
 	width: 100%;
 	clear: both;
+	margin-top: $ten * 3;
 }
 
 article {
-	padding-top: 60px;
+	margin-top: $ten * 7;
 }
 
 ul.pills {
-	padding: 0 0 0 0;
+	padding: $zero;
 
 	li {
 		display: inline-block;
-		color: #fff;
-		padding: 10px;
+		padding: $ten;
 		cursor: pointer;
-		border-bottom: 2px solid #f5f5f5;
+		border-bottom: $ten - 8 solid $white;
 
 		&.active {
-			border-bottom: 2px solid #0F5699;
+			border-bottom: $ten - 8 solid #0F5699;
 		}
 
 		&:hover {
-			border-bottom: 2px solid #BD2B2B;
-
-			a {
-				color: #000;
-			}
+			border-bottom: $ten - 8 solid #BD2B2B;
 		}
 
 		a {
-			color: #9C9C9C;
+			color: darken( $white, 100% );
 		}
 	}
 }
 
 section.copy {
-	padding: 20px;
-	border: 1px solid #ccc;
-	background: #fff;
+	padding: $ten * 2;
+	border: $ten - 9 solid darken( $white, 25% );
+	background: $white;
 	line-height: 1.6em;
 	overflow: auto;
-	margin-bottom: 10px;
-	min-height: 150px;
+	margin-bottom: $ten;
+	min-height: $ten * 15;
 }
 
 footer,
@@ -123,7 +123,7 @@ article {
 }
 
 div.chart {
-	margin: 0 25px 25px 0;
+	margin: 0 $ten * 2.5 $ten * 2.5 0;
 	float: left;
 }
 
@@ -131,13 +131,26 @@ div.chart {
 	margin: 0 !important;
 }
 
+input.filter {
+	font-size: 1em;
+	width: 25%;
+	padding: $ten;
+	border: $ten - 9 solid darken( $white, 31% );
+}
+
 ul.header,
 ul.list {
 	span[data-field='application_summary.response_time'],
 	span[data-field='application_summary.apdex_score'],
-	span[data-field='application_summary.throughput'] {
+	span[data-field='application_summary.throughput'],
+	span[data-field='summary.cpu'],
+	span[data-field='summary.memory'] {
 		text-align: center;
 	}
+}
+
+ul.header span[data-field='summary.cpu'] {
+	text-transform: uppercase;
 }
 
 section.grid,
@@ -146,12 +159,26 @@ ul.list {
 }
 
 ul.list {
-	margin: 0 0 0 0;
-	padding: 0 0 0 0;
+	margin: $zero;
+	padding: $zero;
+
+	&.pages {
+		margin-top: $ten * 2.5;
+
+		li {
+			background-color: $white !important;
+		}
+	}
 
 	li {
+		line-height: 1em;
+		padding: $ten;
 		list-style: none;
 		vertical-align: text-top !important;
+
+		&:nth-child(odd) {
+			background-color: darken( $white, 11% );
+		}
 
 		span.metric {
 			font-weight: normal;
@@ -180,38 +207,42 @@ ul.list {
 		}
 
 		a.tooltip {
-			color : #000 !important;
+			color : darken( $white, 100% ) !important;
 
 			&:hover {
-				color : #000 !important;
+				color : darken( $white, 100% ) !important;
 				cursor: help;
 			}
 		}
 	}
 }
 
-@media print, screen and (max-width: 1150px) {
+.empty {
+	text-align: center;
+}
+
+@media print, screen and (max-width: $ten * 115) {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: 1050px;
+		width: $ten * 105;
 	}
 
 	div.chart {
-		margin: 0 auto 25px auto !important;
+		margin: 0 auto $ten * 2.5 auto !important;
 		float: left;
 	}
 }
 
-@media print, screen and (max-width: 1060px) {
+@media print, screen and (max-width: $ten * 106) {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: 600px;
+		width: $ten * 60;
 	}
 
 	div.chart {
-		margin: 0 auto 25px auto !important;
+		margin: 0 auto $ten * 2.5 auto !important;
 		float: none !important;
 	}
 }
@@ -220,7 +251,7 @@ ul.list {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: 550px;
+		width: 90%;
 	}
 
 	header {
@@ -232,7 +263,11 @@ ul.list {
 	}
 
 	div.chart {
-		margin: 0 auto 25px auto !important;
+		margin: 0 auto $ten * 2.5 auto !important;
 		float: none !important;
+	}
+
+	input.filter {
+		width: 90% !important;
 	}
 }

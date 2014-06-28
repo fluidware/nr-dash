@@ -20,6 +20,7 @@ var store     = keigai.store,
     element   = util.element,
     log       = util.log,
     stop      = util.stop,
+    string    = util.string,
     prevent   = util.prevent,
     request   = util.request,
     target    = util.target,
@@ -63,7 +64,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 60, 30, ( width - 95 ), 305 );
+			dChart.setBounds( 50, 75, ( width - 95 ), 275 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -82,7 +83,7 @@ function chart ( target, data, options ) {
 				dChart.id = options.id;
 			}
 
-			dChart.addLegend( 60, 10, ( width - 100 ), 20, "right" );
+			dChart.addLegend( 10, 10, ( width - 10 ), 60, "left" );
 			dChart.draw();
 
 			defer.resolve( dChart );
@@ -262,14 +263,14 @@ function init () {
 	var defer = util.defer();
 
 	request( "config" ).then( function ( arg ) {
-		if ( !arg.keys.api ) {
+		if ( !arg.api ) {
 			error( new Error( "API key not found" ) );
 		}
 		else {
 			log( "Retrieved configuration" );
 
 			util.merge( config, arg );
-			headers["X-Api-Key"] = config.keys.api;
+			headers["X-Api-Key"] = config.api;
 
 			generate().then(function () {
 				events();
@@ -295,55 +296,76 @@ function metrics () {
 	var lhash     = hash,
 	    defer     = util.defer(),
 	    deferreds = [],
+	    host      = /\:host/,
 	    filter, metric;
 
-	metric = config.pills.filter(function( i ) {
-		return i.slug === hash;
-	} )[0].links.filter( function ( i ) {
-		return i.slug === "metrics";
-	} );
+	metric = config.pills.filter( function ( i ) {
+		return i.slug === lhash;
+	} )[0].metrics;
 
-	if ( metric !== undefined && metric[0] !== undefined ) {
-		if ( metric[0].instances.length === 0 ) {
+	if ( metric !== undefined ) {
+		if ( metric.instances.length === 0 ) {
 			defer.resolve( {} );
 		}
 		else {
-			filter = new Function ( "i", "return /^" + metric[0].instances.join( "|" ) + "$/i.test( i );" );
+			// Creating an anonymous function without lexical scope because it's probably going to a Worker
+			filter = new Function( "arg", "return /^" + metric.instances.map( function ( i ) { return string.escape( i ); } ).join( "|" ) + "$/i.test( arg );" );
 
-			stores[hash].select( {name: filter } ).then( function ( recs ) {
+			stores[lhash].select( {name: filter} ).then( function ( recs ) {
 				array.each( recs, function ( i ) {
-					var url = metric[0].uri.replace( ":id", i.key ) + "?names[]=" + metric[0].names.join( "&names[]=" );
+					var url = metric.uri.replace( ":id", i.key ) + "?names[]=" + metric.names.join( "&names[]=" ),
+					    key = string.singular( lhash ) + "_hosts";
 
-					deferreds.push( request( url, "GET", null, null, null, headers ) );
-				} );
-
-				when( deferreds ).then( function ( args ) {
-					var data = {},
-					    zone = new Date().getTimezoneOffset();
-					
-					if ( hash === lhash ) {
-						array.each( array.mingle( recs, args.map( function ( i ) { return i.metric_data.metrics; } ) ), function ( i ) {
-							array.each( i[1], function ( d ) {
-								var name = d.name.split( "/" )[1];
-
-								if ( data[name] === undefined ) {
-									data[name] = [];
-								}
-
-								array.each( d.timeslices, function ( s ) {
-									data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value } );
-								} );
-							} );
-						} );
-
-						defer.resolve( data );
+					if ( host.test( url ) ) {
+						if ( i.data.links !== undefined && i.data.links[key] !== undefined && i.data.links[key].length > 0 ) {
+							url = url.replace( host, i.data.links[key][0] || 0 );
+							deferreds.push( request( url, "GET", null, null, null, headers ) );
+						}
 					}
 					else {
-						defer.reject( new Error( "Hash has changed, data is stale" ) );
+						deferreds.push( request( url, "GET", null, null, null, headers ) );
 					}
-				}, function ( e ) {
-					defer.reject( e );
 				} );
+
+				if ( deferreds.length > 0 ) {
+					when( deferreds ).then( function ( args ) {
+						var data = {},
+						    zone = new Date().getTimezoneOffset();
+
+						if ( !( args instanceof Array ) ) {
+							args = [args];
+						}
+
+						if ( lhash === hash ) {
+							array.each( array.mingle( recs, args.map( function ( i ) { return i === null ? i : i.metric_data.metrics; } ) ), function ( i ) {
+								array.each( i[1], function ( d ) {
+									var split = d.name.split( "/" ),
+									    name;
+
+									name = split[1] === "Function" ? split[2] : split[1];
+
+									if ( data[name] === undefined ) {
+										data[name] = [];
+									}
+
+									array.each( d.timeslices, function ( s ) {
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+									} );
+								} );
+							} );
+
+							defer.resolve( data );
+						}
+						else {
+							defer.reject( new Error( "Hash has changed, data is stale" ) );
+						}
+					}, function ( e ) {
+						defer.reject( e );
+					} );
+				}
+				else {
+					defer.resolve( {} );
+				}
 			}, function ( e ) {
 				defer.reject( e );
 			} );
@@ -360,29 +382,18 @@ function metrics () {
  * @return {Undefined} undefined
  */
 function view () {
-	var store  = stores[hash],
-	    target = $( "#" + hash )[0],
+	var lhash  = hash,
+	    store  = stores[lhash],
+	    target = $( "#" + lhash )[0],
 	    callback, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
-		log( "Rendering '" + hash + "'" );
+		log( "Rendering '" + lhash + "'" );
 
-		if ( /applications|servers/.test( hash ) ) {
-			if ( hash === "applications" ) {
+		if ( /applications|servers/.test( lhash ) ) {
+			if ( lhash === "applications" ) {
 				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 				order  = "application_summary.response_time desc, name asc";
-
-				callback = function ( el ) {
-					var rec = store.get( element.data( el, "key" ).toString() );
-
-					if ( rec.data.application_summary === undefined || rec.data.application_summary.apdex_score === null ) {
-						render( function () {
-							array.each( element.find( el, ".metric" ), function ( i ) {
-								element.klass( i, "hidden" );
-							} );
-						} );
-					}
-				};
 			}
 			else {
 				fields = ["name", "summary.cpu", "summary.memory"];
@@ -392,45 +403,54 @@ function view () {
 			metrics().then( function ( data ) {
 				var deferreds = [];
 
-				array.each( array.keys( data ), function ( i ) {
-					deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
-				} );
-
-				when( deferreds ).then( function ( charts ) {
-					if ( charts !== null && charts.length > 0 ) {
-						log( "Rendered charts for '" + hash + "'" );
-					}
-
-					render( function () {
-						grid( target, store, fields, fields, {callback: callback, order: order}, true );
-						log( "Rendered view of '" + hash + "'" );
+				if ( lhash == hash ) {
+					array.each( array.keys( data ), function ( i ) {
+						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
 					} );
 
-					if ( charts !== null && charts.length > 0 ) {
-						store.on( "afterSync", function () {
-							metrics().then( function ( data ) {
-								array.each( charts, function ( i ) {
-									i.data = data[i.id];
+					when( deferreds ).then( function ( charts ) {
+						if ( lhash == hash ) {
+							if ( charts !== null && charts.length > 0 ) {
+								log( "Rendered charts for '" + lhash + "'" );
+							}
 
-									// Only draw if visible
-									if ( store.id === hash ) {
-										// 2 second transition
-										i.draw( 2000 );
+							render( function () {
+								grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+								log( "Rendered view of '" + lhash + "'" );
+							} );
+
+							if ( charts !== null && charts.length > 0 ) {
+								store.on( "afterSync", function () {
+									if ( store.id === lhash ) {
+										metrics().then( function ( data ) {
+											array.each( charts, function ( i ) {
+												try {
+													i.data = data[i.id];
+													i.draw( 2000 );
+												}
+												catch ( e ) {}
+											} );
+										} );
 									}
 								} );
-							} );
-						} );
-					}
+							}
 
-					log( "Bound charts and DataStore for '" + hash + "'" );
-				}, function () {
-					log( "Failed to render charts for '" + hash + "'" );
-				} );
+							log( "Bound charts and DataStore for '" + lhash + "'" );
+						}
+					}, function () {
+						log( "Failed to render charts for '" + lhash + "'" );
+					} );
+				}
 			}, function ( e ) {
 				error( e );
+
+				render( function () {
+					grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+					log( "Rendered view of '" + lhash + "'" );
+				} );
 			} );
 		}
-		else if ( hash === "transactions" ) {
+		else if ( lhash === "transactions" ) {
 			fields = ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 			order  = "application_summary.response_time desc, name asc";
 
@@ -442,12 +462,12 @@ function view () {
 			};
 
 			render( function () {
-				grid( target, store, fields, fields, {callback: callback, order: order}, true );
+				grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
 			} );
 		}
 	}
 	else {
-		log( "Viewing '" + hash + "'" );
+		log( "Viewing '" + lhash + "'" );
 	}
 }
 

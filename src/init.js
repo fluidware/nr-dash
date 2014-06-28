@@ -8,14 +8,14 @@ function init () {
 	var defer = util.defer();
 
 	request( "config" ).then( function ( arg ) {
-		if ( !arg.keys.api ) {
+		if ( !arg.api ) {
 			error( new Error( "API key not found" ) );
 		}
 		else {
 			log( "Retrieved configuration" );
 
 			util.merge( config, arg );
-			headers["X-Api-Key"] = config.keys.api;
+			headers["X-Api-Key"] = config.api;
 
 			generate().then(function () {
 				events();

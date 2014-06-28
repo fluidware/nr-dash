@@ -5,29 +5,18 @@
  * @return {Undefined} undefined
  */
 function view () {
-	var store  = stores[hash],
-	    target = $( "#" + hash )[0],
+	var lhash  = hash,
+	    store  = stores[lhash],
+	    target = $( "#" + lhash )[0],
 	    callback, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
-		log( "Rendering '" + hash + "'" );
+		log( "Rendering '" + lhash + "'" );
 
-		if ( /applications|servers/.test( hash ) ) {
-			if ( hash === "applications" ) {
+		if ( /applications|servers/.test( lhash ) ) {
+			if ( lhash === "applications" ) {
 				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 				order  = "application_summary.response_time desc, name asc";
-
-				callback = function ( el ) {
-					var rec = store.get( element.data( el, "key" ).toString() );
-
-					if ( rec.data.application_summary === undefined || rec.data.application_summary.apdex_score === null ) {
-						render( function () {
-							array.each( element.find( el, ".metric" ), function ( i ) {
-								element.klass( i, "hidden" );
-							} );
-						} );
-					}
-				};
 			}
 			else {
 				fields = ["name", "summary.cpu", "summary.memory"];
@@ -37,45 +26,54 @@ function view () {
 			metrics().then( function ( data ) {
 				var deferreds = [];
 
-				array.each( array.keys( data ), function ( i ) {
-					deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
-				} );
-
-				when( deferreds ).then( function ( charts ) {
-					if ( charts !== null && charts.length > 0 ) {
-						log( "Rendered charts for '" + hash + "'" );
-					}
-
-					render( function () {
-						grid( target, store, fields, fields, {callback: callback, order: order}, true );
-						log( "Rendered view of '" + hash + "'" );
+				if ( lhash == hash ) {
+					array.each( array.keys( data ), function ( i ) {
+						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
 					} );
 
-					if ( charts !== null && charts.length > 0 ) {
-						store.on( "afterSync", function () {
-							metrics().then( function ( data ) {
-								array.each( charts, function ( i ) {
-									i.data = data[i.id];
+					when( deferreds ).then( function ( charts ) {
+						if ( lhash == hash ) {
+							if ( charts !== null && charts.length > 0 ) {
+								log( "Rendered charts for '" + lhash + "'" );
+							}
 
-									// Only draw if visible
-									if ( store.id === hash ) {
-										// 2 second transition
-										i.draw( 2000 );
+							render( function () {
+								grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+								log( "Rendered view of '" + lhash + "'" );
+							} );
+
+							if ( charts !== null && charts.length > 0 ) {
+								store.on( "afterSync", function () {
+									if ( store.id === lhash ) {
+										metrics().then( function ( data ) {
+											array.each( charts, function ( i ) {
+												try {
+													i.data = data[i.id];
+													i.draw( 2000 );
+												}
+												catch ( e ) {}
+											} );
+										} );
 									}
 								} );
-							} );
-						} );
-					}
+							}
 
-					log( "Bound charts and DataStore for '" + hash + "'" );
-				}, function () {
-					log( "Failed to render charts for '" + hash + "'" );
-				} );
+							log( "Bound charts and DataStore for '" + lhash + "'" );
+						}
+					}, function () {
+						log( "Failed to render charts for '" + lhash + "'" );
+					} );
+				}
 			}, function ( e ) {
 				error( e );
+
+				render( function () {
+					grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+					log( "Rendered view of '" + lhash + "'" );
+				} );
 			} );
 		}
-		else if ( hash === "transactions" ) {
+		else if ( lhash === "transactions" ) {
 			fields = ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
 			order  = "application_summary.response_time desc, name asc";
 
@@ -87,11 +85,11 @@ function view () {
 			};
 
 			render( function () {
-				grid( target, store, fields, fields, {callback: callback, order: order}, true );
+				grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
 			} );
 		}
 	}
 	else {
-		log( "Viewing '" + hash + "'" );
+		log( "Viewing '" + lhash + "'" );
 	}
 }
