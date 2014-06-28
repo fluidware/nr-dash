@@ -203,7 +203,7 @@ function generate () {
 
 		// Psuedo constants
 		OPTIONS = $( "ul.pills li a" ).map( function ( i ) { return i.href.replace( NOTHASH, "" ); } );
-		DEFAULT = OPTIONS[0];
+		DEFAULT = config["default"] || OPTIONS[0];
 
 		// Generating stores
 		array.each( sections, function ( i ) {
