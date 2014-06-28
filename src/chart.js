@@ -27,7 +27,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 50, 75, ( width - 95 ), 275 );
+			dChart.setBounds( 60, 75, ( width - 95 ), 275 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -35,8 +35,12 @@ function chart ( target, data, options ) {
 
 			y = dChart.addMeasureAxis( "y", "value" );
 
-			if ( options.yTitle ) {
-				y.title = options.yTitle;
+			if ( options.title ) {
+				y.title = options.title;
+			}
+
+			if ( options.tickFormat ) {
+				y.tickFormat = options.tickFormat;
 			}
 
 			s = dChart.addSeries( "name", dimple.plot.line );

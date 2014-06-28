@@ -65,7 +65,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 50, 75, ( width - 95 ), 275 );
+			dChart.setBounds( 60, 75, ( width - 95 ), 275 );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -73,8 +73,12 @@ function chart ( target, data, options ) {
 
 			y = dChart.addMeasureAxis( "y", "value" );
 
-			if ( options.yTitle ) {
-				y.title = options.yTitle;
+			if ( options.title ) {
+				y.title = options.title;
+			}
+
+			if ( options.tickFormat ) {
+				y.tickFormat = options.tickFormat;
 			}
 
 			s = dChart.addSeries( "name", dimple.plot.line );
@@ -411,6 +415,7 @@ function view () {
 	var lhash  = hash,
 	    store  = stores[lhash],
 	    target = $( "#" + lhash )[0],
+	    si     = /Disk|Memory|Network/,
 	    callback, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
@@ -431,7 +436,13 @@ function view () {
 
 				if ( lhash == hash ) {
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
+						var options = {title: i, id: i};
+
+						if ( si.test( i ) ) {
+							options.tickFormat = "s";
+						}
+
+						deferreds.push( chart( target, data[i], options ) );
 					} );
 
 					when( deferreds ).then( function ( charts ) {

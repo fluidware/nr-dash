@@ -8,6 +8,7 @@ function view () {
 	var lhash  = hash,
 	    store  = stores[lhash],
 	    target = $( "#" + lhash )[0],
+	    si     = /Disk|Memory|Network/,
 	    callback, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
@@ -28,7 +29,13 @@ function view () {
 
 				if ( lhash == hash ) {
 					array.each( array.keys( data ), function ( i ) {
-						deferreds.push( chart( target, data[i], {yTitle: i, id: i} ) );
+						var options = {title: i, id: i};
+
+						if ( si.test( i ) ) {
+							options.tickFormat = "s";
+						}
+
+						deferreds.push( chart( target, data[i], options ) );
 					} );
 
 					when( deferreds ).then( function ( charts ) {
