@@ -71,7 +71,7 @@ footer {
 }
 
 article {
-	margin-top: $ten * 7;
+	margin-top: $ten * 7 !important;
 }
 
 ul.pills {
@@ -238,7 +238,7 @@ ul.list {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
-		width: $ten * 60;
+		width: $ten * 96;
 	}
 
 	div.chart {
@@ -247,7 +247,20 @@ ul.list {
 	}
 }
 
-@media print, screen and (max-width: 640px) {
+@media print, screen and (max-width: $ten * 95.9) {
+	header div.container,
+	article {
+		margin: 0 auto 0 auto;
+		width: $ten * 80;
+	}
+
+	div.chart {
+		margin: 0 auto $ten * 2.5 auto !important;
+		float: none !important;
+	}
+}
+
+@media print, screen and (max-width: $ten * 80) {
 	header div.container,
 	article {
 		margin: 0 auto 0 auto;
