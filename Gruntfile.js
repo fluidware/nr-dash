@@ -21,6 +21,7 @@ module.exports = function (grunt) {
 					"src/intro.js",
 					"src/chart.js",
 					"src/click.js",
+					"src/cycle.js",
 					"src/error.js",
 					"src/events.js",
 					"src/generate.js",

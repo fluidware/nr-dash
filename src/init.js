@@ -18,7 +18,14 @@ function init () {
 			headers["X-Api-Key"] = config.api;
 
 			generate().then(function () {
+				// Wiring DOM events
 				events();
+
+				// Cycling pills
+				if ( config.cycle && !isNaN( config.pause ) && config.pause > 0 ) {
+					cycle( config.pause );
+				}
+
 				defer.resolve( true );
 			}, function ( e ) {
 				defer.reject( e );

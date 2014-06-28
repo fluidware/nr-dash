@@ -22,6 +22,7 @@ var store     = keigai.store,
     stop      = util.stop,
     string    = util.string,
     prevent   = util.prevent,
+    repeat    = util.repeat,
     request   = util.request,
     target    = util.target,
     when      = util.when,
@@ -115,6 +116,24 @@ function click ( ev ) {
 			log( "Dispatched click for navigation target/child" );
 		}
 	}
+}
+
+/**
+ * Cycles the nav 'pills'
+ *
+ * @method cycle
+ * @param  {Number} secs Number of seconds to pause while cycling
+ * @return {Undefined}   undefined
+ */
+function cycle ( secs ) {
+	repeat( function () {
+		var current = $( "ul.pills .active")[0],
+		    next    = current.nextElementSibling || current.parentNode.childNodes[0];
+
+		if ( !element.hasClass( next, "active") ) {
+			element.dispatch( next.childNodes[0], "click" );
+		}
+	}, secs * 1000, "navCycle", false );
 }
 
 /**
@@ -273,7 +292,14 @@ function init () {
 			headers["X-Api-Key"] = config.api;
 
 			generate().then(function () {
+				// Wiring DOM events
 				events();
+
+				// Cycling pills
+				if ( config.cycle && !isNaN( config.pause ) && config.pause > 0 ) {
+					cycle( config.pause );
+				}
+
 				defer.resolve( true );
 			}, function ( e ) {
 				defer.reject( e );
