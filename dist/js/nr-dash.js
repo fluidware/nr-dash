@@ -424,7 +424,7 @@ function view () {
 		if ( /applications|servers/.test( lhash ) ) {
 			if ( lhash === "applications" ) {
 				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
-				order  = "application_summary.response_time desc, name asc";
+				order  = "application_summary.throughput desc, application_summary.response_time desc, name asc";
 			}
 			else {
 				fields = ["name", "summary.cpu", "summary.memory"];
@@ -491,7 +491,7 @@ function view () {
 		}
 		else if ( lhash === "transactions" ) {
 			fields = ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
-			order  = "application_summary.response_time desc, name asc";
+			order  = "application_summary.throughput desc, application_summary.response_time desc, name asc";
 
 			callback = function ( el ) {
 				var target = element.find( el, "span.transaction_name" )[0],
