@@ -1,7 +1,7 @@
 {
   "name": "nr-dash",
   "description": "New Relic Dashboard",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "homepage": "http://fluidware.com",
   "author": {
     "name": "Jason Mulligan",
@@ -42,6 +42,7 @@
   },
   "keywords": [
     "new relic",
-    "dashboard"
+    "dashboard",
+    "metrics"
   ]
 }

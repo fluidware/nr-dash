@@ -3,12 +3,13 @@
 	"expire": 30,
 	"port": 8000,
 	"api": null,
-	"pageSize": 10,
-	"cycle": true,
-	"pause": 0,
+	"pageSize": null,
+	"cycle": false,
+	"pause": 21,
 	"transition": 2000,
 	"colors": ["#1269B0", "#BD2B2B", "#0F5699", "#90C8E4", "#2C0905", "#272728"],
 	"default": null,
+	"xformat": "hh:mm A",
 	"pills": [
 		{
 			"name": "Applications",

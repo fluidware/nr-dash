@@ -51,16 +51,35 @@ nav {
 	width: 100%;
 	z-index: 2;
 
-	ul {
+	ul.pills {
+		padding: $zero;
 		margin: 0 auto 0 auto;
 		display: inline-block;
+
+		li {
+			display: inline-block;
+			padding: $ten;
+			cursor: pointer;
+			border-bottom: $ten - 8 solid $white;
+
+			&.active {
+				border-bottom: $ten - 8 solid #0F5699;
+			}
+
+			&:hover {
+				border-bottom: $ten - 8 solid #BD2B2B;
+			}
+
+			a {
+				color: darken( $white, 100% );
+			}
+		}
 	}
 }
 
 header div.container,
 article {
 	margin: 0 auto 0 auto;
-	width: 1120px;
 }
 
 footer {
@@ -72,39 +91,128 @@ footer {
 
 article {
 	margin-top: $ten * 7 !important;
-}
 
-ul.pills {
-	padding: $zero;
+	section.copy {
+		border: $ten - 9 solid darken( $white, 25% );
+		background: $white;
+		line-height: 1.6em;
+		overflow: auto;
+		margin: 0 auto $ten auto;
+		width: 96%;
+		min-height: $ten * 15;
 
-	li {
-		display: inline-block;
-		padding: $ten;
-		cursor: pointer;
-		border-bottom: $ten - 8 solid $white;
-
-		&.active {
-			border-bottom: $ten - 8 solid #0F5699;
+		> * {
+			margin: $ten * 2;
 		}
 
-		&:hover {
-			border-bottom: $ten - 8 solid #BD2B2B;
+		div.chart {
+			margin: 0 $ten * 1.5 $ten * 1.5 0;
+			float: right;
 		}
 
-		a {
-			color: darken( $white, 100% );
+		section.charts {
+			display: inline-block;
+			width: 60%;
+			float: right;
+		}
+
+		section.grid {
+			text-align: left;
+
+			&.hasCharts {
+				width: 40%;
+				overflow: auto;
+
+				input.filter {
+					width: 90% !important;
+				}
+			}
+
+			input.filter {
+				margin: 0 !important;
+				font-size: 1em;
+				width: 25%;
+				padding: $ten;
+				border: $ten - 9 solid darken( $white, 31% );
+			}
+		}
+
+		ul.header,
+		ul.list {
+			span[data-field='application_summary.response_time'],
+			span[data-field='application_summary.apdex_score'],
+			span[data-field='application_summary.throughput'],
+			span[data-field='summary.cpu'],
+			span[data-field='summary.memory'] {
+				text-align: center;
+			}
+		}
+
+		ul.header span[data-field='summary.cpu'] {
+			text-transform: uppercase;
+		}
+
+		ul.list {
+			margin: $zero;
+			padding: $zero;
+			height: 750px;
+			overflow: auto;
+
+			&.pages {
+				margin-top: $ten * 2.5;
+
+				li {
+					background-color: $white !important;
+				}
+			}
+
+			li {
+				line-height: 1em;
+				padding: $ten;
+				list-style: none;
+				vertical-align: text-top !important;
+
+				&:nth-child(odd) {
+					background-color: darken( $white, 11% );
+				}
+
+				span.metric {
+					font-weight: normal;
+					display: block;
+
+					span.name {
+						display: inline-block;
+						width: 60%;
+					}
+
+					span.value {
+						font-weight: bold;
+					}
+				}
+
+				.green {
+					color: green;
+				}
+
+				.orange {
+					color: orange;
+				}
+
+				.red {
+					color: red;
+				}
+
+				a.tooltip {
+					color : darken( $white, 100% ) !important;
+
+					&:hover {
+						color : darken( $white, 100% ) !important;
+						cursor: help;
+					}
+				}
+			}
 		}
 	}
-}
-
-section.copy {
-	padding: $ten * 2;
-	border: $ten - 9 solid darken( $white, 25% );
-	background: $white;
-	line-height: 1.6em;
-	overflow: auto;
-	margin-bottom: $ten;
-	min-height: $ten * 15;
 }
 
 footer,
@@ -122,168 +230,87 @@ article {
 	display: none !important;
 }
 
-div.chart {
-	margin: 0 $ten * 2.5 $ten * 2.5 0;
-	float: left;
-}
-
-.grid .filter {
-	margin: 0 !important;
-}
-
-input.filter {
-	font-size: 1em;
-	width: 25%;
-	padding: $ten;
-	border: $ten - 9 solid darken( $white, 31% );
-}
-
-ul.header,
-ul.list {
-	span[data-field='application_summary.response_time'],
-	span[data-field='application_summary.apdex_score'],
-	span[data-field='application_summary.throughput'],
-	span[data-field='summary.cpu'],
-	span[data-field='summary.memory'] {
-		text-align: center;
-	}
-}
-
-ul.header span[data-field='summary.cpu'] {
-	text-transform: uppercase;
-}
-
-section.grid,
-ul.list {
-	clear: both;
-}
-
-ul.list {
-	margin: $zero;
-	padding: $zero;
-
-	&.pages {
-		margin-top: $ten * 2.5;
-
-		li {
-			background-color: $white !important;
-		}
-	}
-
-	li {
-		line-height: 1em;
-		padding: $ten;
-		list-style: none;
-		vertical-align: text-top !important;
-
-		&:nth-child(odd) {
-			background-color: darken( $white, 11% );
-		}
-
-		span.metric {
-			font-weight: normal;
-			display: block;
-
-			span.name {
-				display: inline-block;
-				width: 60%;
-			}
-
-			span.value {
-				font-weight: bold;
-			}
-		}
-
-		.green {
-			color: green;
-		}
-
-		.orange {
-			color: orange;
-		}
-
-		.red {
-			color: red;
-		}
-
-		a.tooltip {
-			color : darken( $white, 100% ) !important;
-
-			&:hover {
-				color : darken( $white, 100% ) !important;
-				cursor: help;
-			}
-		}
-	}
-}
-
 .empty {
 	text-align: center;
 }
 
-@media print, screen and (max-width: $ten * 115) {
-	header div.container,
-	article {
-		margin: 0 auto 0 auto;
-		width: $ten * 105;
+// Smaller than 1080p
+@media print, screen and (min-width: $ten * 158) and (max-width: $ten * 190) {
+	section.charts {
+		width: 70% !important;
 	}
 
-	div.chart {
-		margin: 0 auto $ten * 2.5 auto !important;
-		float: left;
+	section.grid.hasCharts {
+		width: 30% !important;
+
+		input.filter {
+			width: 90% !important;
+		}
 	}
 }
 
-@media print, screen and (max-width: $ten * 106) {
-	header div.container,
-	article {
-		margin: 0 auto 0 auto;
-		width: $ten * 96;
-	}
-
-	div.chart {
-		margin: 0 auto $ten * 2.5 auto !important;
-		text-align: center !important;
+// Smaller desktop monitor
+@media print, screen and (min-width: $ten * 111.5) and (max-width: $ten * 157.9) {
+	section.charts {
+		width: 100% !important;
 		float: none !important;
+		text-align: center;
+
+		div.chart {
+			float: none !important;
+			display: inline-block;
+		}
+	}
+
+	section.grid.hasCharts {
+		width: 100% !important;
+		clear: both;
+
+		input.filter {
+			width: 90% !important;
+		}
+
+		ul.list {
+			height: auto !important;
+			overflow: none !important;
+		}
 	}
 }
 
-@media print, screen and (max-width: $ten * 95.9) {
-	header div.container,
-	article {
-		margin: 0 auto 0 auto;
-		width: $ten * 80;
-	}
-
-	div.chart {
-		margin: 0 auto $ten * 2.5 auto !important;
-		text-align: center !important;
+// Mobile devices
+@media print, screen and (max-width: $ten * 111.4) {
+	section.charts {
+		width: 100% !important;
 		float: none !important;
+		text-align: center;
+
+		div.chart {
+			float: none !important;
+			display: inline-block;
+		}
+	}
+
+	section.grid.hasCharts {
+		width: 100% !important;
+		clear: both;
+
+		input.filter {
+			width: 90% !important;
+		}
+
+		ul.list {
+			height: auto !important;
+			overflow: none !important;
+		}
 	}
 }
 
-@media print, screen and (max-width: $ten * 80) {
-	header div.container,
-	article {
-		margin: 0 auto 0 auto;
-		width: 90%;
-	}
-
+@media print, screen and (max-width: $ten * 95) {
 	header {
 		display: none !important;
 
 		img {
 			display: none !important;
 		}
-	}
-
-	div.chart {
-		margin: 0 auto $ten * 2.5 auto !important;
-		text-align: center !important;
-		float: none !important;
-	}
-
-	input.filter {
-		width: 90% !important;
 	}
 }

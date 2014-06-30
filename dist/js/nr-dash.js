@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 0.1.1
+ * @version 1.0.0
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -49,7 +49,7 @@ function chart ( target, data, options ) {
 	options    = options || {};
 	var defer  = util.defer(),
 	    width  = options.width  || 500,
-	    height = options.height || 400;
+	    height = options.height || 420;
 
 	render( function () {
 		var el, dSvg, dChart, x, y, s;
@@ -379,7 +379,7 @@ function metrics () {
 									}
 
 									array.each( d.timeslices, function ( s ) {
-										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
 									} );
 								} );
 							} );
@@ -416,7 +416,7 @@ function view () {
 	    store  = stores[lhash],
 	    target = $( "#" + lhash )[0],
 	    si     = /Disk|Memory|Network/,
-	    callback, fields, order;
+	    callback, ctarget, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
 		log( "Rendering '" + lhash + "'" );
@@ -438,11 +438,25 @@ function view () {
 					array.each( array.keys( data ), function ( i ) {
 						var options = {title: i, id: i};
 
+						if ( ctarget === undefined ) {
+							ctarget = element.create( "section", {"class": "charts"}, target );
+						}
+
 						if ( si.test( i ) ) {
 							options.tickFormat = "s";
 						}
 
-						deferreds.push( chart( target, data[i], options ) );
+						deferreds.push( chart( ctarget, data[i], options ) );
+					} );
+
+					render( function () {
+						grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+
+						if ( ctarget !== undefined ) {
+							element.klass( element.find( target, "> .grid")[0], "hasCharts" );
+						}
+
+						log( "Rendered view of '" + lhash + "'" );
 					} );
 
 					when( deferreds ).then( function ( charts ) {
@@ -450,11 +464,6 @@ function view () {
 							if ( charts !== null && charts.length > 0 ) {
 								log( "Rendered charts for '" + lhash + "'" );
 							}
-
-							render( function () {
-								grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
-								log( "Rendered view of '" + lhash + "'" );
-							} );
 
 							if ( charts !== null && charts.length > 0 ) {
 								store.on( "afterSync", function () {
@@ -464,7 +473,7 @@ function view () {
 												try {
 													i.data = data[i.id];
 													render( function () {
-														i.draw( 2000 );
+														i.draw( config.transition );
 													} );
 												}
 												catch ( e ) {}
@@ -513,7 +522,7 @@ function view () {
 // Public interface
 window.nrDash = {
 	stores  : stores,
-	version : "0.1.1"
+	version : "1.0.0"
 };
 
 // Initializing

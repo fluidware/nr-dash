@@ -9,7 +9,7 @@ function view () {
 	    store  = stores[lhash],
 	    target = $( "#" + lhash )[0],
 	    si     = /Disk|Memory|Network/,
-	    callback, fields, order;
+	    callback, ctarget, fields, order;
 
 	if ( target.childNodes.length === 0 ) {
 		log( "Rendering '" + lhash + "'" );
@@ -31,11 +31,25 @@ function view () {
 					array.each( array.keys( data ), function ( i ) {
 						var options = {title: i, id: i};
 
+						if ( ctarget === undefined ) {
+							ctarget = element.create( "section", {"class": "charts"}, target );
+						}
+
 						if ( si.test( i ) ) {
 							options.tickFormat = "s";
 						}
 
-						deferreds.push( chart( target, data[i], options ) );
+						deferreds.push( chart( ctarget, data[i], options ) );
+					} );
+
+					render( function () {
+						grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+
+						if ( ctarget !== undefined ) {
+							element.klass( element.find( target, "> .grid")[0], "hasCharts" );
+						}
+
+						log( "Rendered view of '" + lhash + "'" );
 					} );
 
 					when( deferreds ).then( function ( charts ) {
@@ -43,11 +57,6 @@ function view () {
 							if ( charts !== null && charts.length > 0 ) {
 								log( "Rendered charts for '" + lhash + "'" );
 							}
-
-							render( function () {
-								grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
-								log( "Rendered view of '" + lhash + "'" );
-							} );
 
 							if ( charts !== null && charts.length > 0 ) {
 								store.on( "afterSync", function () {

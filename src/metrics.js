@@ -61,7 +61,7 @@ function metrics () {
 									}
 
 									array.each( d.timeslices, function ( s ) {
-										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( "h:mm" ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
 									} );
 								} );
 							} );

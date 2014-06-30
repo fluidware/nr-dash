@@ -11,7 +11,7 @@ function chart ( target, data, options ) {
 	options    = options || {};
 	var defer  = util.defer(),
 	    width  = options.width  || 500,
-	    height = options.height || 400;
+	    height = options.height || 420;
 
 	render( function () {
 		var el, dSvg, dChart, x, y, s;
