@@ -20,7 +20,7 @@ app.get( "/config", function ( req, res ) {
 }, HOSTNAME );
 
 app.start( {
-	root    : ".",
+	root    : __dirname + "/.",
 	port    : config.port || 8000,
 	//uid     : 101, // uid of account to drop to when starting with priviledges (low port)
 	default : HOSTNAME,

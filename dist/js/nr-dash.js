@@ -1,13 +1,13 @@
 /**
  * nr-dash
  *
- * New Relic Dashboard
+ * NewRelic Dashboard
  *
  * @author Jason Mulligan <jmulligan@fluidware.com>
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.0.0
+ * @version 1.0.1
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -522,7 +522,7 @@ function view () {
 // Public interface
 window.nrDash = {
 	stores  : stores,
-	version : "1.0.0"
+	version : "1.0.1"
 };
 
 // Initializing
