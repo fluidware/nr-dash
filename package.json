@@ -28,7 +28,7 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "turtle.io": "2.0.15"
+    "turtle.io": "2.1.0"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
