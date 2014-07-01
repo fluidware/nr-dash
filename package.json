@@ -1,7 +1,7 @@
 {
   "name": "nr-dash",
   "description": "NewRelic Dashboard",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "homepage": "http://fluidware.com",
   "author": {
     "name": "Jason Mulligan",
@@ -28,19 +28,20 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "turtle.io": "2.1.0"
+    "turtle.io": "2.1.1"
   },
   "devDependencies": {
     "grunt": "~0.4.1",
-    "grunt-cli": "~0.1.7",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-jshint": "~0.1",
     "grunt-contrib-nodeunit": "~0.1.2",
     "grunt-contrib-sass": "^0.7.3",
     "grunt-contrib-watch": "~0.2",
+    "grunt-contrib-uglify": "~0.5.0",
     "grunt-sed": "~0.1"
   },
   "keywords": [
+    "newrelic",
     "new relic",
     "dashboard",
     "metrics"

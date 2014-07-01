@@ -9,11 +9,8 @@ function metrics () {
 	    defer     = util.defer(),
 	    deferreds = [],
 	    host      = /\:host/,
-	    filter, metric;
-
-	metric = config.pills.filter( function ( i ) {
-		return i.slug === lhash;
-	} )[0].metrics;
+	    metric    = config.pills.filter( function ( i ) { return i.slug === lhash; } )[0].metrics,
+	    filter;
 
 	if ( metric !== undefined ) {
 		if ( metric.instances.length === 0 ) {

@@ -9,14 +9,14 @@
 ## Installation
 nr-dash can be installed from node/npm, or by cloning this repository.
 
-### npm
+#### npm
 - Type `npm install nr-dash`
 - Edit `config.json` and set your API key in `key`
 - Create a symlink to the app: `ln -s node_modules/nr-dash/app.js app.js`
 - Type `node app.js` (`stdout` & `stderr` are supported)
 
-### git
-- Clone this project
+#### git
+- Clone this repository
 - Edit `config.json` and set your API key in `key`
 - Configure your webserver to use the `/dist` folder
 - Configure a route at `/config` to respond with `config.json`
@@ -45,6 +45,71 @@ nr-dash has a RWD which allows it to run on practically any device, such as:
 - smartphones
 - laptops / desktops
 - TVs
+
+## Configuration
+
+#### api (string) _null_
+NewRelic API key
+
+#### colors (array)
+Array of chart legend colors
+
+#### cycle (boolean) _false_
+Cycles dashboard pills
+
+#### default (string) _null_
+Default pill to load (defaults to first pill if _null_)
+
+#### expire (number) _30_
+DataStore expiration in seconds
+
+#### hostname (string) _localhost_
+Hostname for the `app.js` server
+
+#### pageSize (number) _15_
+Page size for DataGrids, `null` to disable pagination
+
+#### pause (number) _21_
+Pause between cycles (do not use the same value as _expire_)
+
+#### port (number) _8000_
+Port for the `app.js` server
+
+#### si (string) _Disk|Memory|Network_
+Parsed metric names that should be formatted as _SI_, this is used to generate a `RegExp`
+
+#### transition (number) _2_
+Seconds to animate chart redraw
+
+#### xformat (string) _hh:mm A_
+X axis tick format, via `moment.js`
+
+## How to make a "pill"
+Pills are the name of the dashboard "views", it's just a data abstraction of the interface. nr-dash comes with three predefined pills, but those might not suit your needs, so
+we made it very easy for you to generate the UI from the data!
+
+To generate a new "pill", follow this template:
+
+```json
+{
+	"name": "Name in UI",
+	"slug": "Slug/Route",
+	"source": "Data source in NewRelic API response, usually matches 'name'",
+	"uri": "NewRelic API end point",
+	"fields": ["keys in API response to display in DataGrid"],
+	"order": "SQL like ORDER BY statement of keys in DataGrid"
+}
+```
+
+If you want charts, add a `metrics` Object to the pill:
+
+```json
+"metrics": {
+	"uri": "NewRelic API end point",
+	"instances": ["Name of instances to chart"],
+	"names": ["Names of metrics to chart"]
+}
+```
 
 ## License
 Copyright (c) 2014 Fluidware

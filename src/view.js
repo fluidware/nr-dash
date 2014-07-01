@@ -8,22 +8,16 @@ function view () {
 	var lhash  = hash,
 	    store  = stores[lhash],
 	    target = $( "#" + lhash )[0],
-	    si     = /Disk|Memory|Network/,
-	    callback, ctarget, fields, order;
+	    si     = new RegExp( config.si ),
+	    pill   = config.pills.filter( function ( i ) { return i.slug === lhash; } )[0],
+	    fields = pill.fields,
+	    order  = pill.order,
+	    callback, ctarget;
 
 	if ( target.childNodes.length === 0 ) {
 		log( "Rendering '" + lhash + "'" );
 
-		if ( /applications|servers/.test( lhash ) ) {
-			if ( lhash === "applications" ) {
-				fields = ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
-				order  = "application_summary.throughput desc, application_summary.response_time desc, name asc";
-			}
-			else {
-				fields = ["name", "summary.cpu", "summary.memory"];
-				order  = "summary.memory desc, name asc";
-			}
-
+		if ( pill.metrics !== undefined ) {
 			metrics().then( function ( data ) {
 				var deferreds = [];
 
@@ -66,7 +60,7 @@ function view () {
 												try {
 													i.data = data[i.id];
 													render( function () {
-														i.draw( config.transition );
+														i.draw( config.transition * 1000 );
 													} );
 												}
 												catch ( e ) {}
@@ -91,15 +85,15 @@ function view () {
 				} );
 			} );
 		}
-		else if ( lhash === "transactions" ) {
-			fields = ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"];
-			order  = "application_summary.throughput desc, application_summary.response_time desc, name asc";
-
+		else {
+			// Exists solely for transactions, generalized for anything...
 			callback = function ( el ) {
-				var target = element.find( el, "span.transaction_name" )[0],
-				    text   = element.text( target );
+				var target = element.find( el, "span." + string.singular( lhash ) + "_name" )[0],
+				    text   = target ? element.text( target ) : "";
 
-				element.html( target, "<a title=\"" + text + "\" class=\"tooltip\">" + text + "</a>" );
+				if ( target !== undefined ) {
+					element.html( target, "<a title=\"" + text + "\" class=\"tooltip\">" + text + "</a>" );
+				}
 			};
 
 			render( function () {

@@ -61,6 +61,16 @@ module.exports = function (grunt) {
 				path : ["<%= concat.dist.dest %>"]
 			}
 		},
+		uglify: {
+			options: {
+				banner: '/*! <%= pkg.name %> - <%= pkg.version %> */'
+			},
+			dist: {
+				files: {
+					'dist/js/nr-dash.min.js': ['dist/js/nr-dash.js']
+				}
+			}
+		},
 		watch : {
 			grunt : {
 				files : "./Gruntfile.js",
@@ -92,9 +102,10 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks("grunt-contrib-nodeunit");
 	grunt.loadNpmTasks("grunt-contrib-jshint");
 	grunt.loadNpmTasks('grunt-contrib-watch');
+	grunt.loadNpmTasks('grunt-contrib-uglify');
 
 	// aliases
 	grunt.registerTask("test", ["jshint"/*, "nodeunit"*/]);
-	grunt.registerTask("build", ["concat", "sed", "sass"]);
-	grunt.registerTask("default", ["build", "test"]);
+	grunt.registerTask("build", ["concat", "sed"]);
+	grunt.registerTask("default", ["build", "test", "uglify", "sass"]);
 };

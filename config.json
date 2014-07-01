@@ -1,14 +1,15 @@
 {
-	"hostname": "localhost",
-	"expire": 30,
-	"port": 8000,
 	"api": null,
-	"pageSize": null,
-	"cycle": false,
-	"pause": 21,
-	"transition": 2000,
 	"colors": ["#1269B0", "#BD2B2B", "#0F5699", "#90C8E4", "#2C0905", "#272728"],
+	"cycle": false,
 	"default": null,
+	"expire": 30,
+	"hostname": "localhost",
+	"pageSize": 15,
+	"pause": 21,
+	"port": 8000,
+	"si": "Disk|Memory|Network",
+	"transition": 2,
 	"xformat": "hh:mm A",
 	"pills": [
 		{
@@ -16,6 +17,8 @@
 			"slug": "applications",
 			"source": "applications",
 			"uri": "https://api.newrelic.com/v2/applications.json",
+			"fields": ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"],
+			"order": "application_summary.throughput desc, application_summary.response_time desc, name asc",
 			"metrics": {
 				"uri": "https://api.newrelic.com/v2/applications/:id/hosts/:host/metrics/data.json",
 				"instances": [],
@@ -27,6 +30,8 @@
 			"slug": "servers",
 			"source": "servers",
 			"uri": "https://api.newrelic.com/v2/servers.json",
+			"fields": ["name", "summary.cpu", "summary.memory"],
+			"order": "summary.memory desc, name asc",
 			"metrics": {
 				"uri": "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
 				"instances": [],
@@ -37,7 +42,9 @@
 			"name": "Transactions",
 			"slug": "transactions",
 			"source": "key_transactions",
-			"uri": "https://api.newrelic.com/v2/key_transactions.json"
+			"uri": "https://api.newrelic.com/v2/key_transactions.json",
+			"fields": ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"],
+			"order": "application_summary.throughput desc, application_summary.response_time desc, name asc"
 		}
 	]
 }
