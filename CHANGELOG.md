@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.0.3
+- Removing unwanted `text` nodes from DOM due to erroneous Array.join()s.
+
 ## 1.0.2
 - Added `fields` & `order` Arrays to pills in `config.json`
 - Refactored `view()` to utilize new pill properties, & generalize view creation

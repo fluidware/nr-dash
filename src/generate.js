@@ -20,8 +20,8 @@ function generate () {
 		var deferreds = [];
 
 		// DOM injection
-		element.html( PILLS, pills.join( "\n" ) );
-		element.html( COPY, copy.join( "\n" ) );
+		element.html( PILLS, pills.join( "" ) );
+		element.html( COPY, copy.join( "" ) );
 
 		log( "Rendered Elements" );
 

@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.0.2
+ * @version 1.0.3
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -200,8 +200,8 @@ function generate () {
 		var deferreds = [];
 
 		// DOM injection
-		element.html( PILLS, pills.join( "\n" ) );
-		element.html( COPY, copy.join( "\n" ) );
+		element.html( PILLS, pills.join( "" ) );
+		element.html( COPY, copy.join( "" ) );
 
 		log( "Rendered Elements" );
 
@@ -513,7 +513,7 @@ function view () {
 // Public interface
 window.nrDash = {
 	stores  : stores,
-	version : "1.0.2"
+	version : "1.0.3"
 };
 
 // Initializing
