@@ -1,5 +1,11 @@
 # Change Log
 
+## 1.0.4
+- Upgrading keigai to 0.5.1 to leverage ES6 Promises
+- Loading Promise polyfill for IE & mobile devices
+- Fixing `hashchange()` for IE
+- Updating node deps
+
 ## 1.0.3
 - Removing unwanted `text` nodes from DOM due to erroneous Array.join()s.
 

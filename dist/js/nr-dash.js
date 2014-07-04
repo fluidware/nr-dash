@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.0.3
+ * @version 1.0.4
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -248,8 +248,8 @@ function generate () {
  * @return {Undefined} undefined
  */
 function hashchange ( ev ) {
-	var oldHash  = ev.oldURL.indexOf( "#" ) > -1 ? ev.oldURL.replace( NOTHASH, "" ) : null,
-	    newHash  = ev.newURL.indexOf( "#" ) > -1 ? ev.newURL.replace( NOTHASH, "" ) : null,
+	var oldHash  = hash ? hash : null,
+	    newHash  = document.location.hash ? document.location.hash.replace( "#", "" ) : null,
 	    $oldDiv  = oldHash ? $( "#" + oldHash )[0] : null,
 	    $newDiv  = newHash ? $( "#" + newHash )[0] : null,
 	    $oldItem = oldHash ? $( "a[href='#" + oldHash + "']" )[0] : null,
@@ -513,7 +513,7 @@ function view () {
 // Public interface
 window.nrDash = {
 	stores  : stores,
-	version : "1.0.3"
+	version : "1.0.4"
 };
 
 // Initializing

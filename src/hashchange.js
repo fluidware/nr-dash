@@ -6,8 +6,8 @@
  * @return {Undefined} undefined
  */
 function hashchange ( ev ) {
-	var oldHash  = ev.oldURL.indexOf( "#" ) > -1 ? ev.oldURL.replace( NOTHASH, "" ) : null,
-	    newHash  = ev.newURL.indexOf( "#" ) > -1 ? ev.newURL.replace( NOTHASH, "" ) : null,
+	var oldHash  = hash ? hash : null,
+	    newHash  = document.location.hash ? document.location.hash.replace( "#", "" ) : null,
 	    $oldDiv  = oldHash ? $( "#" + oldHash )[0] : null,
 	    $newDiv  = newHash ? $( "#" + newHash )[0] : null,
 	    $oldItem = oldHash ? $( "a[href='#" + oldHash + "']" )[0] : null,
