@@ -38,8 +38,7 @@ function metrics () {
 
 				if ( deferreds.length > 0 ) {
 					when( deferreds ).then( function ( args ) {
-						var data = {},
-						    zone = new Date().getTimezoneOffset();
+						var data = {};
 
 						if ( !( args instanceof Array ) ) {
 							args = [args];
@@ -58,7 +57,7 @@ function metrics () {
 									}
 
 									array.each( d.timeslices, function ( s ) {
-										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( ZONE ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
 									} );
 								} );
 							} );

@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.0.4
+ * @version 1.1.0
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -25,12 +25,15 @@ var store     = keigai.store,
     repeat    = util.repeat,
     request   = util.request,
     target    = util.target,
+    walk      = util.walk,
     when      = util.when,
     hash      = document.location.hash.replace( "#", "" ),
     headers   = {},
+    charts    = {},
     config    = {},
     stores    = {},
     render    = util.render,
+    ZONE      = new Date().getTimezoneOffset(),
     PILLS     = $( "ul.pills" )[0],     // expected Element
     COPY      = $( "section.copy" )[0], // expected Element
     NOTHASH   = /.*\#/,
@@ -90,6 +93,7 @@ function chart ( target, data, options ) {
 
 			dChart.addLegend( 10, 10, ( width - 10 ), 60, "left" );
 			dChart.draw();
+			dChart.element = el;
 
 			defer.resolve( dChart );
 		}
@@ -101,6 +105,151 @@ function chart ( target, data, options ) {
 	return defer;
 }
 
+/**
+ * Creates a reactive chart for the DataGrid
+ *
+ * @method chartGrid
+ * @param  {Object} grid    DataGrid
+ * @param  {Object} si      RegExp to enable "SI" format
+ * @param  {Object} ctarget Element
+ * @param  {String} lhash   "local" hash
+ * @return {Object}         DataGrid
+ */
+function chartGrid ( grid, si, ctarget, lhash ) {
+	var fields  = {},
+	    circles = [],
+	    seen    = [],
+	    nth     = 0,
+	    total   = 0,
+	    cleared = false,
+	    lcharts, rname, keys, obj;
+
+	if ( charts[grid.id] === undefined ) {
+		lcharts = [];
+		fields  = {};
+		rname   = /(.*\.)?/;
+
+		array.each( grid.fields, function ( i ) {
+			var name = string.capitalize( string.unCamelCase( string.unhyphenate( i.replace( rname, "" ), true ) ).replace( /_|-/g, " " ), true );
+
+			fields[name] = i;
+		} );
+
+		keys = array.keys( fields ).filter( function ( i ) { return i !== "Name"; } ).sort( array.sort );
+		obj  = {};
+
+		array.each( keys, function ( i ) {
+			obj[i] = [];
+		} );
+
+		obj = charts[grid.store.id] = chartGridTransform( keys, fields, obj, grid.store.records );
+
+		array.each( keys, function ( i ) {
+			var options = {title: i, id: i};
+
+			if ( si.test( i ) ) {
+				options.tickFormat = "s";
+			}
+
+			chart( ctarget, obj[i], options ).then( function ( chart ) {
+				lcharts.push( chart );
+
+				circles = circles.concat( element.find( chart.element, "circle" ) );
+				total   = circles.length;
+			} );
+		} );
+
+		grid.store.on( "afterSync", function () {
+			obj = charts[grid.store.id] = chartGridTransform( keys, fields, obj, grid.store.records );
+
+			if ( lhash === hash ) {
+				render( function () {
+					if ( !cleared ) {
+						array.each( circles, function ( i, idx ) {
+							var name  = i.id.replace( /_.*/, "" ),
+							    found = {},
+							    key;
+							
+							if ( string.isEmpty( i.ownerSVGElement.id ) ) {
+								i.ownerSVGElement.id = "k" + util.uuid().replace(/-/g, "");
+							}
+
+							array.each( keys, function ( i ) {
+								found[i] = obj[i].filter( function ( i ) { return i.name === name; } ).length;
+							} );
+
+							if ( !array.contains( seen, idx ) ) {
+								key = $( "#" + i.ownerSVGElement.id + " .dimple-title" )[0].innerHTML;
+
+								if ( found[key] > 1 ) {
+									++nth;
+									seen.push( idx );
+									// needs a hover trigger, or something...
+									d3.select( i ).attr( "opacity", 0 );
+								}
+							}
+						} );
+
+						if ( nth === total ) {
+							cleared = true;
+						}
+					}
+
+					array.each( lcharts, function ( i ) {
+						i.data = obj[i.id];
+						i.draw( config.transition * 1000 );
+					} );
+				} );
+			}
+		}, "chartGrid" );
+	}
+
+	return charts[grid.id];
+}
+
+/**
+ * Returns the last 30 minutes of data
+ *
+ * @method chartGridTransform
+ * @param  {Array}  keys    Chart keys
+ * @param  {Object} fields  Record fields by `key`
+ * @param  {Object} data    Chart data
+ * @param  {Array}  records DataStore records
+ * @return {Array}          Chart data constrained to 30 minutes
+ */
+function chartGridTransform ( keys, fields, data, records ) {
+	var result = {},
+	    mmnt   = moment();
+
+	// Removing stale data
+	array.each( keys, function ( key ) {
+		result[key] = data[key].filter( function ( i ) {
+			return mmnt.diff( moment.unix( i.unix ), "minutes" ) <= 30;
+		} );
+	} );
+
+	// Adding fresh data
+	array.each( records, function ( i ) {
+		var cdata = i.data;
+
+		array.each( keys, function ( key ) {
+			var value = walk( cdata, fields[key] ),
+			    ldate = cdata.last_reported_at,
+			    unix  = moment.utc( ldate ).unix(),
+			    nth;
+
+			nth = result[key].filter( function ( i ) {
+				return i.name === cdata.name && i.unix === unix;
+			} ).length;
+
+			if ( nth === 0 ) {
+				result[key].push( {name: cdata.name, time: moment.utc( ldate ).zone( ZONE ).format( config.xformat ), unix: moment.utc( ldate ).unix(), value: value } );
+			}
+		} );
+	} );
+
+	return result;
+}
 /**
  * Navigation click listener
  *
@@ -356,8 +505,7 @@ function metrics () {
 
 				if ( deferreds.length > 0 ) {
 					when( deferreds ).then( function ( args ) {
-						var data = {},
-						    zone = new Date().getTimezoneOffset();
+						var data = {};
 
 						if ( !( args instanceof Array ) ) {
 							args = [args];
@@ -376,7 +524,7 @@ function metrics () {
 									}
 
 									array.each( d.timeslices, function ( s ) {
-										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( zone ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
+										data[name].push( {name: i[0].data.name, time: moment.utc( s.from ).zone( ZONE ).format( config.xformat ), value: s.values.per_second || s.values.average_value || s.values.value || s.values.score } );
 									} );
 								} );
 							} );
@@ -423,15 +571,16 @@ function view () {
 
 		if ( pill.metrics !== undefined ) {
 			metrics().then( function ( data ) {
-				var deferreds = [];
+				var deferreds = [],
+				    keys      = array.keys( data ).sort( array.sort );
 
 				if ( lhash == hash ) {
-					array.each( array.keys( data ), function ( i ) {
-						var options = {title: i, id: i};
+					if ( ctarget === undefined && ( keys.length > 0 || pill.chartGrid === true ) ) {
+						ctarget = element.create( "section", {"class": "charts"}, target );
+					}
 
-						if ( ctarget === undefined ) {
-							ctarget = element.create( "section", {"class": "charts"}, target );
-						}
+					array.each( keys, function ( i ) {
+						var options = {title: i, id: i};
 
 						if ( si.test( i ) ) {
 							options.tickFormat = "s";
@@ -441,10 +590,14 @@ function view () {
 					} );
 
 					render( function () {
-						grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+						var lgrid = grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
 
 						if ( ctarget !== undefined ) {
-							element.klass( element.find( target, "> .grid")[0], "hasCharts" );
+							element.klass( lgrid.element, "hasCharts" );
+						}
+
+						if ( pill.chartGrid === true ) {
+							chartGrid( lgrid, si, ctarget, lhash );
 						}
 
 						log( "Rendered view of '" + lhash + "'" );
@@ -501,7 +654,18 @@ function view () {
 			};
 
 			render( function () {
-				grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
+				var lgrid;
+
+				if ( ctarget === undefined && pill.chartGrid === true ) {
+					ctarget = element.create( "section", {"class": "charts"}, target );
+				}
+
+				lgrid = grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
+
+				if ( ctarget !== undefined ) {
+					element.klass( lgrid.element, "hasCharts" );
+					chartGrid( lgrid, si, ctarget, lhash );
+				}
 			} );
 		}
 	}
@@ -512,8 +676,9 @@ function view () {
 
 // Public interface
 window.nrDash = {
+	charts  : charts,
 	stores  : stores,
-	version : "1.0.4"
+	version : "1.1.0"
 };
 
 // Initializing

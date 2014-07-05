@@ -33,7 +33,7 @@
 			"uri": "https://api.newrelic.com/v2/servers.json",
 			"fields": ["name", "summary.cpu", "summary.memory"],
 			"order": "summary.memory desc, name asc",
-			"chartGrid": true,
+			"chartGrid": false,
 			"metrics": {
 				"uri": "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
 				"instances": [],

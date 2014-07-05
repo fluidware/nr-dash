@@ -19,15 +19,16 @@ function view () {
 
 		if ( pill.metrics !== undefined ) {
 			metrics().then( function ( data ) {
-				var deferreds = [];
+				var deferreds = [],
+				    keys      = array.keys( data ).sort( array.sort );
 
 				if ( lhash == hash ) {
-					array.each( array.keys( data ), function ( i ) {
-						var options = {title: i, id: i};
+					if ( ctarget === undefined && ( keys.length > 0 || pill.chartGrid === true ) ) {
+						ctarget = element.create( "section", {"class": "charts"}, target );
+					}
 
-						if ( ctarget === undefined ) {
-							ctarget = element.create( "section", {"class": "charts"}, target );
-						}
+					array.each( keys, function ( i ) {
+						var options = {title: i, id: i};
 
 						if ( si.test( i ) ) {
 							options.tickFormat = "s";
@@ -37,10 +38,14 @@ function view () {
 					} );
 
 					render( function () {
-						grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
+						var lgrid = grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
 
 						if ( ctarget !== undefined ) {
-							element.klass( element.find( target, "> .grid")[0], "hasCharts" );
+							element.klass( lgrid.element, "hasCharts" );
+						}
+
+						if ( pill.chartGrid === true ) {
+							chartGrid( lgrid, si, ctarget, lhash );
 						}
 
 						log( "Rendered view of '" + lhash + "'" );
@@ -97,7 +102,18 @@ function view () {
 			};
 
 			render( function () {
-				grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
+				var lgrid;
+
+				if ( ctarget === undefined && pill.chartGrid === true ) {
+					ctarget = element.create( "section", {"class": "charts"}, target );
+				}
+
+				lgrid = grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
+
+				if ( ctarget !== undefined ) {
+					element.klass( lgrid.element, "hasCharts" );
+					chartGrid( lgrid, si, ctarget, lhash );
+				}
 			} );
 		}
 	}

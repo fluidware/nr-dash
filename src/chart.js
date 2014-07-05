@@ -52,6 +52,7 @@ function chart ( target, data, options ) {
 
 			dChart.addLegend( 10, 10, ( width - 10 ), 60, "left" );
 			dChart.draw();
+			dChart.element = el;
 
 			defer.resolve( dChart );
 		}

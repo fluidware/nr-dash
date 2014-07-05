@@ -20,6 +20,8 @@ module.exports = function (grunt) {
 					"<banner>",
 					"src/intro.js",
 					"src/chart.js",
+					"src/chartGrid.js",
+					"src/chartGridTransform.js",
 					"src/click.js",
 					"src/cycle.js",
 					"src/error.js",
