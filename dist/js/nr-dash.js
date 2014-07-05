@@ -258,6 +258,7 @@ function chartGridTransform ( keys, fields, data, records ) {
 
 	return result;
 }
+
 /**
  * Navigation click listener
  *
