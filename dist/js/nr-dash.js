@@ -184,13 +184,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 								if ( found[key] > 1 ) {
 									++nth;
 									seen.push( idx );
-									d3.select( i )
-									  .attr( "opacity", 0 )
-									  .on( "mouseout", function () {
-									  	d3.select( this )
-									  	  .attr( "opacity", 0 )
-									  	  .style( "opacity", 0 );
-									   } );
+									d3.select( i ).attr( "opacity", 0 ).on( "mouseout", function () { d3.select( this ).attr( "opacity", 0 ).style( "opacity", 0 ); } );
 								}
 							}
 						} );
