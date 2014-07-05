@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.1.0
+- Adding `chartGrid` (boolean, default `false`) to `pills` in `config.json`
+
 ## 1.0.4
 - Upgrading keigai to 0.5.1 to leverage ES6 Promises
 - Loading Promise polyfill for IE & mobile devices

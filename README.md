@@ -97,7 +97,8 @@ To generate a new "pill", follow this template:
 	"source": "Data source in NewRelic API response, usually matches 'name'",
 	"uri": "NewRelic API end point",
 	"fields": ["keys in API response to display in DataGrid"],
-	"order": "SQL like ORDER BY statement of keys in DataGrid"
+	"order": "SQL like ORDER BY statement of keys in DataGrid",
+	"chartGrid": true/false (will generate charts for columns in the DataGrid)
 }
 ```
 

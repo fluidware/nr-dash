@@ -19,6 +19,7 @@
 			"uri": "https://api.newrelic.com/v2/applications.json",
 			"fields": ["name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"],
 			"order": "application_summary.throughput desc, application_summary.response_time desc, name asc",
+			"chartGrid": true,
 			"metrics": {
 				"uri": "https://api.newrelic.com/v2/applications/:id/hosts/:host/metrics/data.json",
 				"instances": [],
@@ -32,6 +33,7 @@
 			"uri": "https://api.newrelic.com/v2/servers.json",
 			"fields": ["name", "summary.cpu", "summary.memory"],
 			"order": "summary.memory desc, name asc",
+			"chartGrid": true,
 			"metrics": {
 				"uri": "https://api.newrelic.com/v2/servers/:id/metrics/data.json",
 				"instances": [],
@@ -44,7 +46,8 @@
 			"source": "key_transactions",
 			"uri": "https://api.newrelic.com/v2/key_transactions.json",
 			"fields": ["name", "transaction_name", "application_summary.response_time", "application_summary.apdex_score", "application_summary.throughput"],
-			"order": "application_summary.throughput desc, application_summary.response_time desc, name asc"
+			"order": "application_summary.throughput desc, application_summary.response_time desc, name asc",
+			"chartGrid": false
 		}
 	]
 }
