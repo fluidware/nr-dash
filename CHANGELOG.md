@@ -2,6 +2,7 @@
 
 ## 1.1.0
 - Adding `chartGrid` (boolean, default `false`) to `pills` in `config.json`
+- Adding `chartGrid()` & `chartGridTransform()` provide reactive charts of DataGrids, by config
 
 ## 1.0.4
 - Upgrading keigai to 0.5.1 to leverage ES6 Promises

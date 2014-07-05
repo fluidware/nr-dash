@@ -171,7 +171,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 							    key;
 							
 							if ( string.isEmpty( i.ownerSVGElement.id ) ) {
-								i.ownerSVGElement.id = "k" + util.uuid().replace(/-/g, "");
+								i.ownerSVGElement.id = "k" + util.uuid().replace( /-/g, "" );
 							}
 
 							array.each( keys, function ( i ) {
@@ -184,10 +184,20 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 								if ( found[key] > 1 ) {
 									++nth;
 									seen.push( idx );
-									// needs a hover trigger, or something...
-									d3.select( i ).attr( "opacity", 0 );
+									d3.select( i )
+									  .attr( "opacity", 0 )
+									  .on( "mouseout", function () {
+									  	d3.select( this )
+									  	  .attr( "opacity", 0 )
+									  	  .style( "opacity", 0 );
+									   } );
 								}
 							}
+						} );
+
+						// Cleaning potential previous 'hover' states
+						array.each( seen, function ( i ) {
+							d3.select( circles[i] ).attr( "opacity", 0 ).style( "opacity", 0 );
 						} );
 
 						if ( nth === total ) {
@@ -237,6 +247,10 @@ function chartGridTransform ( keys, fields, data, records ) {
 			    ldate = cdata.last_reported_at,
 			    unix  = moment.utc( ldate ).unix(),
 			    nth;
+
+			if ( value === null || value === undefined ) {
+				return;
+			}
 
 			nth = result[key].filter( function ( i ) {
 				return i.name === cdata.name && i.unix === unix;
