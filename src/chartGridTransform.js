@@ -21,33 +21,30 @@ function chartGridTransform ( keys, fields, data, records ) {
 
 	// Adding fresh data
 	array.each( records, function ( i ) {
-		var cdata = i.data;
+		var ldata = i.data;
 
 		array.each( keys, function ( key ) {
-			var value = walk( cdata, fields[key] ),
-			    ldate = cdata.last_reported_at,
-			    ltime = moment.utc( ldate ).zone( ZONE ).format( config.xformat ),
-			    nth;
+			var lvalue = walk( ldata, fields[key] ),
+			    ldate  = ldata.last_reported_at,
+			    ltime  = moment.utc( ldate ).zone( ZONE ).format( config.xformat ),
+			    lunix  = moment.utc( ldate ).unix(),
+			    found  = false;
 
-			if ( value === null || value === undefined ) {
+			if ( lvalue === null || lvalue === undefined ) {
 				return;
 			}
 
-			nth = result[key].filter( function ( i ) {
-				return i.name === cdata.name && i.time === ltime;
-			} ).length;
+			array.each( result[key], function ( i ) {
+				if ( i.name === ldata.name && i.time === ltime ) {
+					i.value = lvalue;
+					i.unix  = lunix;
+					found   = true;
+					return false;
+				}
+			} );
 
-			if ( nth === 0 ) {
-				result[key].push( {name: cdata.name, time: moment.utc( ldate ).zone( ZONE ).format( config.xformat ), unix: moment.utc( ldate ).unix(), value: value } );
-			}
-			else {
-				array.each( result[key], function ( i, idx ) {
-					if ( i.name === cdata.name && i.time === ltime ) {
-						i.value = value;
-						i.unix  = moment.utc( ldate ).unix();
-						return false;
-					}
-				} );
+			if ( !found ) {
+				result[key].push( {name: ldata.name, time: ltime, unix: lunix, value: lvalue } );
 			}
 		} );
 	} );
