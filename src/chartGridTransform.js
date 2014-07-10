@@ -26,7 +26,7 @@ function chartGridTransform ( keys, fields, data, records ) {
 		array.each( keys, function ( key ) {
 			var value = walk( cdata, fields[key] ),
 			    ldate = cdata.last_reported_at,
-			    unix  = moment.utc( ldate ).unix(),
+			    ltime = moment.utc( ldate ).zone( ZONE ).format( config.xformat ),
 			    nth;
 
 			if ( value === null || value === undefined ) {
@@ -34,11 +34,20 @@ function chartGridTransform ( keys, fields, data, records ) {
 			}
 
 			nth = result[key].filter( function ( i ) {
-				return i.name === cdata.name && i.unix === unix;
+				return i.name === cdata.name && i.time === ltime;
 			} ).length;
 
 			if ( nth === 0 ) {
 				result[key].push( {name: cdata.name, time: moment.utc( ldate ).zone( ZONE ).format( config.xformat ), unix: moment.utc( ldate ).unix(), value: value } );
+			}
+			else {
+				array.each( result[key], function ( i, idx ) {
+					if ( i.name === cdata.name && i.time === ltime ) {
+						i.value = value;
+						i.unix  = moment.utc( ldate ).unix();
+						return false;
+					}
+				} );
 			}
 		} );
 	} );

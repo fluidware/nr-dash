@@ -1,5 +1,8 @@
 # Change Log
 
+## 1.1.1
+- Fixing 'Apdex Score' creep on the DataGrid backed charts (Applications, etc.)
+
 ## 1.1.0
 - Adding `chartGrid` (boolean, default `false`) to `pills` in `config.json`
 - Adding `chartGrid()` & `chartGridTransform()` provide reactive charts of DataGrids, by config

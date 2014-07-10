@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.1.0
+ * @version 1.1.1
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -239,7 +239,7 @@ function chartGridTransform ( keys, fields, data, records ) {
 		array.each( keys, function ( key ) {
 			var value = walk( cdata, fields[key] ),
 			    ldate = cdata.last_reported_at,
-			    unix  = moment.utc( ldate ).unix(),
+			    ltime = moment.utc( ldate ).zone( ZONE ).format( config.xformat ),
 			    nth;
 
 			if ( value === null || value === undefined ) {
@@ -247,11 +247,20 @@ function chartGridTransform ( keys, fields, data, records ) {
 			}
 
 			nth = result[key].filter( function ( i ) {
-				return i.name === cdata.name && i.unix === unix;
+				return i.name === cdata.name && i.time === ltime;
 			} ).length;
 
 			if ( nth === 0 ) {
 				result[key].push( {name: cdata.name, time: moment.utc( ldate ).zone( ZONE ).format( config.xformat ), unix: moment.utc( ldate ).unix(), value: value } );
+			}
+			else {
+				array.each( result[key], function ( i, idx ) {
+					if ( i.name === cdata.name && i.time === ltime ) {
+						i.value = value;
+						i.unix  = moment.utc( ldate ).unix();
+						return false;
+					}
+				} );
 			}
 		} );
 	} );
@@ -687,7 +696,7 @@ function view () {
 window.nrDash = {
 	charts  : charts,
 	stores  : stores,
-	version : "1.1.0"
+	version : "1.1.1"
 };
 
 // Initializing
