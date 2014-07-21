@@ -1,7 +1,7 @@
 {
   "name": "nr-dash",
   "description": "NewRelic Dashboard",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "homepage": "http://fluidware.com",
   "author": {
     "name": "Jason Mulligan",
@@ -28,7 +28,7 @@
     "test": "grunt test"
   },
   "dependencies": {
-    "turtle.io": "2.1.2"
+    "turtle.io": "2.1.4"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

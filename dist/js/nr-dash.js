@@ -7,7 +7,7 @@
  * @copyright 2014 Fluidware
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.1.1
+ * @version 1.1.2
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -693,7 +693,7 @@ function view () {
 window.nrDash = {
 	charts  : charts,
 	stores  : stores,
-	version : "1.1.1"
+	version : "1.1.2"
 };
 
 // Initializing
