@@ -4,10 +4,10 @@
  * NewRelic Dashboard
  *
  * @author Jason Mulligan <jmulligan@fluidware.com>
- * @copyright 2014 Fluidware
+ * @copyright 2015 SurveyMonkey
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
  * @link http://fluidware.com
- * @version 1.1.2
+ * @version 1.2.0
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -43,12 +43,13 @@ var store     = keigai.store,
  * Chart factory
  *
  * @method chart
- * @param  {String} target  Target Element
- * @param  {Object} data    Data for the chart
- * @param  {Object} options [Optional] Chart options / descriptor
- * @return {Object}         keigai Deferred
+ * @param  {String} target   Target Element
+ * @param  {Object} data     Data for the chart
+ * @param  {Object} options  [Optional] Chart options / descriptor
+ * @param  {Number} boundary Chart boundary for the 'top' to give space for the legend
+ * @return {Object}          keigai Deferred
  */
-function chart ( target, data, options ) {
+function chart ( target, data, options, boundary ) {
 	options    = options || {};
 	var defer  = util.defer(),
 	    width  = options.width  || 500,
@@ -68,7 +69,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 60, 75, ( width - 95 ), 275 );
+			dChart.setBounds( 60, boundary, ( width - 95 ), ( height - boundary - 60 ) );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -77,6 +78,10 @@ function chart ( target, data, options ) {
 			y = dChart.addMeasureAxis( "y", "value" );
 
 			if ( options.title ) {
+				if ( /time/i.test( options.title ) ) {
+					options.title += " (ms)";
+				}
+
 				y.title = options.title;
 			}
 
@@ -91,7 +96,7 @@ function chart ( target, data, options ) {
 				dChart.id = options.id;
 			}
 
-			dChart.addLegend( 10, 10, ( width - 10 ), 60, "left" );
+			dChart.addLegend( 10, 10, ( width - 10 ), boundary, "left" );
 			dChart.draw();
 			dChart.element = el;
 
@@ -122,7 +127,8 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 	    nth     = 0,
 	    total   = 0,
 	    cleared = false,
-	    lcharts, rname, keys, obj;
+	    lcharts, rname, keys, obj,
+	    boundary;
 
 	if ( charts[grid.id] === undefined ) {
 		lcharts = [];
@@ -144,6 +150,10 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 
 		obj = charts[grid.store.id] = chartGridTransform( keys, fields, obj, grid.store.records );
 
+		// Setting a standard boundary for all charts
+		boundary = Math.ceil( array.max( array.cast( obj ).map( function ( i ) { return i.length; } ) ) / 2 );
+		boundary = boundary * ( boundary <= 6 ? 20 : 17 );
+
 		array.each( keys, function ( i ) {
 			var options = {title: i, id: i};
 
@@ -151,7 +161,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 				options.tickFormat = "s";
 			}
 
-			chart( ctarget, obj[i], options ).then( function ( chart ) {
+			chart( ctarget, obj[i], options, boundary ).then( function ( chart ) {
 				lcharts.push( chart );
 
 				circles = circles.concat( element.find( chart.element, "circle" ) );
@@ -184,7 +194,9 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 								if ( found[key] > 1 ) {
 									++nth;
 									seen.push( idx );
-									d3.select( i ).attr( "opacity", 0 ).on( "mouseout", function () { d3.select( this ).attr( "opacity", 0 ).style( "opacity", 0 ); } );
+									d3.select( i ).attr( "opacity", 0 ).on( "mouseout", function () {
+										d3.select( this ).attr( "opacity", 0 ).style( "opacity", 0 );
+									} );
 								}
 							}
 						} );
@@ -693,7 +705,7 @@ function view () {
 window.nrDash = {
 	charts  : charts,
 	stores  : stores,
-	version : "1.1.2"
+	version : "1.2.0"
 };
 
 // Initializing

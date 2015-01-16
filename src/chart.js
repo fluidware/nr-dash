@@ -2,12 +2,13 @@
  * Chart factory
  *
  * @method chart
- * @param  {String} target  Target Element
- * @param  {Object} data    Data for the chart
- * @param  {Object} options [Optional] Chart options / descriptor
- * @return {Object}         keigai Deferred
+ * @param  {String} target   Target Element
+ * @param  {Object} data     Data for the chart
+ * @param  {Object} options  [Optional] Chart options / descriptor
+ * @param  {Number} boundary Chart boundary for the 'top' to give space for the legend
+ * @return {Object}          keigai Deferred
  */
-function chart ( target, data, options ) {
+function chart ( target, data, options, boundary ) {
 	options    = options || {};
 	var defer  = util.defer(),
 	    width  = options.width  || 500,
@@ -27,7 +28,7 @@ function chart ( target, data, options ) {
 				} );
 			}
 
-			dChart.setBounds( 60, 75, ( width - 95 ), 275 );
+			dChart.setBounds( 60, boundary, ( width - 95 ), ( height - boundary - 60 ) );
 
 			x = dChart.addCategoryAxis( "x", "time" );
 			x.addOrderRule( "time" );
@@ -36,6 +37,10 @@ function chart ( target, data, options ) {
 			y = dChart.addMeasureAxis( "y", "value" );
 
 			if ( options.title ) {
+				if ( /time/i.test( options.title ) ) {
+					options.title += " (ms)";
+				}
+
 				y.title = options.title;
 			}
 
@@ -50,7 +55,7 @@ function chart ( target, data, options ) {
 				dChart.id = options.id;
 			}
 
-			dChart.addLegend( 10, 10, ( width - 10 ), 60, "left" );
+			dChart.addLegend( 10, 10, ( width - 10 ), boundary, "left" );
 			dChart.draw();
 			dChart.element = el;
 

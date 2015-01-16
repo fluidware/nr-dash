@@ -3,6 +3,8 @@
 $white: #fff;
 $ten: 10px;
 $zero: 0 0 0 0;
+$green: #a9bd38;
+$grey: #5b5a4b;
 
 html,
 body {
@@ -10,9 +12,9 @@ body {
 }
 
 body {
-	background: darken( $white, 10% );
+	background: $grey;
 	font: 16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	color: darken( $white, 100% );
+	color: darken( $white, 90% );
 	margin: $zero;
 	padding: $zero;
 }
@@ -37,15 +39,12 @@ header {
 	}
 }
 
-nav,
-section.copy {
-	background: $white;
-}
-
 nav {
+	color: $white;
+	background: darken( $white, 80% );
 	clear: both;
 	text-align: center;
-	border-bottom: $ten - 9 solid darken( $white, 20% );
+	border-bottom: $ten - 9 solid $green;
 	position: fixed;
 	top: 0px;
 	width: 100%;
@@ -60,18 +59,18 @@ nav {
 			display: inline-block;
 			padding: $ten;
 			cursor: pointer;
-			border-bottom: $ten - 8 solid $white;
+			border-bottom: $ten - 8 solid darken( $white, 80% );
 
 			&.active {
-				border-bottom: $ten - 8 solid #0F5699;
+				border-bottom: $ten - 8 solid $green;
 			}
 
 			&:hover {
-				border-bottom: $ten - 8 solid #BD2B2B;
+				border-bottom: $ten - 8 solid darken( $green, 20% );
 			}
 
 			a {
-				color: darken( $white, 100% );
+				color: $white;
 			}
 		}
 	}
@@ -87,6 +86,7 @@ footer {
 	width: 100%;
 	clear: both;
 	margin-top: $ten * 3;
+	color: darken( $white, 20% );
 }
 
 article {
@@ -223,10 +223,10 @@ article {
 footer,
 article {
 	a {
-		color: #0F5699;
+		color: $green;
 
 		&:hover {
-			color: #01203D;
+			color: darken( $white, 90% );
 		}
 	}
 }

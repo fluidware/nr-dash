@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.2.0
+- Fixed chart generation, such that there is a dynamic & standard legend boundary
+- Changing visual style to match SurveyMonkey
+- Updating dimple, keigai, & turtle.io dependencies
+
 ## 1.1.2
 - Updating turtle.io dependency
 

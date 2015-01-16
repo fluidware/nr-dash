@@ -2,11 +2,11 @@
  * Lightweight data store library, with a utility belt
  *
  * @author Jason Mulligan <jason.mulligan@avoidwork.com>
- * @copyright 2014 Jason Mulligan
+ * @copyright 2015 Jason Mulligan
  * @license BSD-3 <https://raw.github.com/avoidwork/keigai/master/LICENSE>
  * @link http://keigai.io
  * @module keigai
- * @version 0.5.3
+ * @version 1.0.3
  */
 ( function ( global ) {
 
@@ -89,7 +89,8 @@ var regex = {
 	html                 : /^<.*>$/,
 	http_body            : /200|201|202|203|206/,
 	http_ports           : /80|443/,
-	ie                   : /msie|ie/i,
+	host                 : /\/\/(.*)\//,
+	ie                   : /msie|ie|\.net|windows\snt/i,
 	ip                   : /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/,
 	is_xml               : /^<\?xml.*\?>/,
 	json_maybe           : /json|plain|javascript/,
@@ -109,6 +110,7 @@ var regex = {
 	patch                : /^patch$/,
 	primitive            : /^(boolean|function|number|string)$/,
 	priv                 : /private/,
+	protocol             : /^(.*)\/\//,
 	put_post             : /^(post|put)$/i,
 	radio_checkbox       : /^(radio|checkbox)$/i,
 	root                 : /^\/[^\/]/,
@@ -901,8 +903,9 @@ var array = {
 	 *
 	 * @method clone
 	 * @memberOf array
-	 * @param  {Array} obj Array to clone
-	 * @return {Array}     Clone of Array
+	 * @param  {Array}   obj     Array to clone
+	 * @param  {Boolean} shallow [Optional] Default is `true`
+	 * @return {Array}           Clone of Array
 	 * @example
 	 * var myArray      = [1, 2, 3, 4, 5],
 	 *     myArrayClone = keigai.util.array.clone( myArray );
@@ -912,8 +915,8 @@ var array = {
 	 * myArray.length;      // 5
 	 * myArrayClone.length; // 6
 	 */
-	clone : function ( obj ) {
-		return obj.slice();
+	clone : function ( obj, shallow ) {
+		return utility.clone( obj, shallow !== false );
 	},
 
 	/**
@@ -965,7 +968,8 @@ var array = {
 	 * keigai.util.array.compact( ["a", "b", "c", "d"], true );       // null
 	 */
 	compact : function ( obj, diff ) {
-		var result = [];
+		diff = ( diff === true );
+		var result;
 
 		result = obj.filter( function ( i ) {
 			return !regex.null_undefined.test( i );
@@ -1070,6 +1074,64 @@ var array = {
 				offset += size;
 
 				if ( offset >= nth ) {
+					return false;
+				}
+			}, undefined, undefined, false );
+		}
+
+		return obj;
+	},
+
+	/**
+	 * Iterates `obj` in reverse and executes `fn` with arguments [`value`, `index`].
+	 * Returning `false` halts iteration.
+	 *
+	 * @method eachReverse
+	 * @memberOf array
+	 * @param  {Array}    obj   Array to iterate
+	 * @param  {Function} fn    Function to execute on index values
+	 * @param  {Boolean}  async [Optional] Asynchronous iteration
+	 * @param  {Number}   size  [Optional] Batch size for async iteration, default is 10
+	 * @return {Array}          Array
+	 * @example
+	 * keigai.util.array.eachReverse( [ ... ], function ( ... ) { ... } );
+	 * keigai.util.array.eachReverse( [ ... ], function ( ... ) { ... }, true, 100 ); // processing batches of a 100
+	 */
+	eachReverse : function ( obj, fn, async, size ) {
+		var nth = obj.length,
+			i, offset;
+
+		if ( async !== true ) {
+			i = nth;
+			while ( --i > -1 ) {
+				if ( fn.call( obj, obj[i], i ) === false ) {
+					break;
+				}
+			}
+		}
+		else {
+			size   = size || 10;
+			offset = nth - 1;
+
+			if ( size > nth ) {
+				size = nth;
+			}
+
+			utility.repeat( function () {
+				var i = -1,
+					idx;
+
+				while ( ++i < size ) {
+					idx = offset - i;
+
+					if ( idx < 0 || fn.call( obj, obj[idx], idx ) === false ) {
+						return false;
+					}
+				}
+
+				offset -= size;
+
+				if ( offset < 0 ) {
 					return false;
 				}
 			}, undefined, undefined, false );
@@ -1318,10 +1380,6 @@ var array = {
 	 * myArray[1]; // "c"
 	 */
 	keepIf : function ( obj, fn ) {
-		if ( typeof fn != "function" ) {
-			throw new Error( label.invalidArguments );
-		}
-
 		var result = [],
 		    remove = [];
 
@@ -1593,9 +1651,8 @@ var array = {
 	mode : function ( obj ) {
 		var values = {},
 		    count  = 0,
-		    nth    = 0,
 		    mode   = [],
-		    result;
+		    nth, result;
 
 		// Counting values
 		array.each( obj, function ( i ) {
@@ -1781,13 +1838,7 @@ var array = {
 	 * myArray[0]; // "b"
 	 */
 	removeIf : function ( obj, fn ) {
-		var remove;
-
-		if ( typeof fn != "function" ) {
-			throw new Error( label.invalidArguments );
-		}
-
-		remove = obj.filter( fn );
+		var remove = obj.filter( fn );
 
 		array.each( remove, function ( i ) {
 			array.remove( obj, array.index ( obj, i ) );
@@ -1812,10 +1863,6 @@ var array = {
 	 * myArray.length; // 2
 	 */
 	removeWhile : function ( obj, fn ) {
-		if ( typeof fn != "function" ) {
-			throw new Error( label.invalidArguments );
-		}
-
 		var remove = [];
 
 		array.each( obj, function ( i ) {
@@ -2273,21 +2320,6 @@ var cache = {
 	lru : lru.factory( CACHE ),
 
 	/**
-	 * Garbage collector for the cached items
-	 *
-	 * @method clean
-	 * @memberOf cache
-	 * @return {Undefined} undefined
-	 */
-	clean : function () {
-		array.each( array.keys( cache.lru.cache ), function ( i ) {
-			if ( cache.expired( i ) ) {
-				cache.expire( i );
-			}
-		} );
-	},
-
-	/**
 	 * Expires a URI from the local cache
 	 *
 	 * @method expire
@@ -2442,7 +2474,7 @@ var client = {
 
 		if ( this.ie ) {
 			version = navigator.userAgent.replace(/(.*msie|;.*)/gi, "");
-			version = number.parse( string.trim( version ) );
+			version = number.parse( string.trim( version ) || 9, 10 );
 		}
 
 		return version;
@@ -2612,6 +2644,12 @@ var client = {
 		if ( ( regex.json_maybe.test( type ) || string.isEmpty( type ) ) && ( regex.json_wrap.test( xhr.responseText ) && Boolean( obj = json.decode( xhr.responseText, true ) ) ) ) {
 			result = obj;
 		}
+		else if ( type === "text/csv" ) {
+			result = csv.decode( xhr.responseText );
+		}
+		else if ( type === "text/tsv" ) {
+			result = csv.decode( xhr.responseText, "\t" );
+		}
 		else if ( regex.xml.test( type ) ) {
 			if ( type !== "text/xml" ) {
 				xhr.overrideMimeType( "text/xml" );
@@ -2668,10 +2706,8 @@ var client = {
 	 *
 	 * @method jsonp
 	 * @memberOf client
-	 * @param  {String}   uri     URI to request
-	 * @param  {Function} success A handler function to execute when an appropriate response been received
-	 * @param  {Function} failure [Optional] A handler function to execute on error
-	 * @param  {Mixed}    args    Custom JSONP handler parameter name, default is "callback"; or custom headers for GET request ( CORS )
+	 * @param  {String} uri  URI to request
+	 * @param  {Mixed}  args Custom JSONP handler parameter name, default is "callback"; or custom headers for GET request ( CORS )
 	 * @return {Object} {@link keigai.Deferred}
 	 * @example
 	 * keigai.util.jsonp( "http://somedomain.com/resource?callback=", function ( arg ) {
@@ -2680,7 +2716,7 @@ var client = {
 	 *   // Handle `err`
 	 * } );
 	 */
-	jsonp : function ( uri, success, failure, args ) {
+	jsonp : function ( uri, args ) {
 		var defer    = deferred.factory(),
 		    callback = "callback",
 		    cbid, s;
@@ -2696,18 +2732,6 @@ var client = {
 		if ( args instanceof Object && !args.callback ) {
 			callback = args.callback;
 		}
-
-		defer.then( function ( arg ) {
-			if ( typeof success == "function") {
-				success( arg );
-			}
-		}, function ( e ) {
-			if ( typeof failure == "function") {
-				failure( e );
-			}
-
-			throw e;
-		} );
 
 		do {
 			cbid = utility.genId().slice( 0, 10 );
@@ -2768,11 +2792,8 @@ var client = {
 	 * @memberOf client
 	 * @param  {String}   uri     URI to query
 	 * @param  {String}   type    [Optional] Type of request ( DELETE/GET/POST/PUT/PATCH/HEAD/OPTIONS ), default is `GET`
-	 * @param  {Function} success [Optional] Handler to execute when an appropriate response been received
-	 * @param  {Function} failure [Optional] Handler to execute on error
 	 * @param  {Mixed}    args    [Optional] Data to send with the request
 	 * @param  {Object}   headers [Optional] Custom request headers ( can be used to set withCredentials )
-	 * @param  {Number}   timeout [Optional] Timeout in milliseconds, default is 30000
 	 * @return {Object}   {@link keigai.KXMLHttpRequest}
 	 * @example
 	 * keigai.util.request( "http://keigai.io" ).then( function ( arg ) {
@@ -2781,7 +2802,7 @@ var client = {
 	 *   // Handle `err`
 	 * } );
 	 */
-	request : function ( uri, type, success, failure, args, headers, timeout ) {
+	request : function ( uri, type, args, headers ) {
 		var cors, kxhr, payload, cached, contentType, doc, ab, blob;
 
 		type = type || "GET";
@@ -2793,7 +2814,6 @@ var client = {
 		uri         = utility.parse( uri ).href;
 		type        = type.toLowerCase();
 		headers     = headers instanceof Object ? headers : null;
-		timeout     = timeout || 30000;
 		cors        = client.cors( uri );
 		kxhr        = client.kxhr( !client.ie || ( !cors || client.version > 9 ) ? new XMLHttpRequest() : new XDomainRequest() );
 		payload     = ( regex.put_post.test( type ) || regex.patch.test( type ) ) && args ? args : null;
@@ -2817,24 +2837,6 @@ var client = {
 				case 4:
 					this.dispatch( "afterXHR", this.xhr, ev );
 					break;
-			}
-		} );
-
-		// Using a deferred to resolve request
-		kxhr.then( function ( arg ) {
-			if ( typeof success == "function" ) {
-				success.call( kxhr.xhr, arg, kxhr.xhr );
-			}
-
-			return arg;
-		}, function ( e ) {
-			if ( typeof failure == "function" ) {
-				try {
-					return failure.call( kxhr.xhr, e, kxhr.xhr );
-				}
-				catch ( err ) {
-					throw err;
-				}
 			}
 		} );
 
@@ -2890,7 +2892,7 @@ var client = {
 						contentType = "application/xml";
 					}
 
-					if ( !( ab && payload instanceof ArrayBuffer ) && !( blob && payload instanceof Blob ) && ( !server && !( payload instanceof Buffer ) ) && payload instanceof Object ) {
+					if ( !( ab && payload instanceof ArrayBuffer ) && !( blob && payload instanceof Blob ) && !( payload instanceof Buffer ) && payload instanceof Object ) {
 						contentType = "application/json";
 						payload = json.encode( payload );
 					}
@@ -2921,6 +2923,8 @@ var client = {
 					if ( headers.hasOwnProperty( "callback" ) ) {
 						delete headers.callback;
 					}
+
+					headers["x-requested-with"] = "XMLHttpRequest";
 
 					utility.iterate( headers, function ( v, k ) {
 						if ( v !== null && k !== "withCredentials") {
@@ -2995,7 +2999,7 @@ var client = {
 										}
 										else {
 											redirect = string.trim ( o.headers.Location || r );
-											client.request( redirect, "GET", function ( arg ) {
+											client.request( redirect ).then( function ( arg ) {
 												self.resolve ( arg );
 											}, function ( e ) {
 												self.reject( e );
@@ -3090,6 +3094,120 @@ var client = {
 			window.scrollX || 0,
 			window.scrollY || 0
 		];
+	}
+};
+
+/**
+ * @namespace csv
+ */
+var csv = {
+	/**
+	 * Converts CSV to an Array of Objects
+	 *
+	 * @method decode
+	 * @memberOf csv
+	 * @param  {String} arg       CSV string
+	 * @param  {String} delimiter [Optional] Delimiter to split columns on, default is ","
+	 * @return {Array}            Array of Objects
+	 */
+	decode : function ( arg, delimiter ) {
+		delimiter  = delimiter || ",";
+		var regex  = new RegExp( delimiter + "(?=(?:[^\"]|\"(?:[^\"])[^\"]*\")*$)" ),
+		    rows   = string.trim( arg ).split( "\n" ),
+		    keys   = rows.shift().split( delimiter ),
+		    result = [],
+		    nth    = rows.length,
+		    x      = keys.length,
+		    i      = -1,
+		    n, obj, row;
+
+		while ( ++i < nth ) {
+			obj = {};
+			row = rows[i].split( regex );
+
+			n = -1;
+			while ( ++n  < x ) {
+				obj[keys[n]] = utility.coerce( ( row[n] || "" ).replace( /^"|"$/g, "" ) );
+			}
+
+			result.push( obj );
+		}
+
+		return result;
+	},
+
+	/**
+	 * Encodes an Array, JSON, or Object as CSV
+	 *
+	 * @method encode
+	 * @memberOf csv
+	 * @param  {Mixed}   arg       JSON, Array or Object
+	 * @param  {String}  delimiter [Optional] Character to separate fields
+	 * @param  {Boolean} header    [Optional] `false` to disable keys names as first row
+	 * @return {String}            CSV string
+	 * @example
+	 * var csv = keigai.util.csv.encode( [{prop:"value"}, {prop:"value2"}] );
+	 *
+	 * console.log( csv );
+	 * "prop
+	 *  value
+	 *  value2"
+	 */
+	encode : function ( arg, delimiter, header ) {
+		var obj    = json.decode( arg, true ) || arg,
+		    result = "";
+
+		delimiter  = delimiter || ",";
+		header     = ( header !== false );
+
+		// Prepares input based on CSV rules
+		function prepare ( input ) {
+			var output;
+
+			if ( input instanceof Array ) {
+				output = "\"" + input.toString() + "\"";
+
+				if ( regex.object_type.test( output ) ) {
+					output = "\"" + csv.encode( input, delimiter ) + "\"";
+				}
+			}
+			else if ( input instanceof Object ) {
+				output = "\"" + csv.encode( input, delimiter ) + "\"";
+			}
+			else if ( regex.csv_quote.test( input ) ) {
+				output = "\"" + input.replace( /"/g, "\"\"" ) + "\"";
+			}
+			else {
+				output = input;
+			}
+
+			return output;
+		}
+
+		if ( obj instanceof Array ) {
+			if ( obj[0] instanceof Object ) {
+				if ( header ) {
+					result = ( array.keys( obj[0] ).join( delimiter ) + "\n" );
+				}
+
+				result += obj.map( function ( i ) {
+					return csv.encode( i, delimiter, false );
+				} ).join( "\n" );
+			}
+			else {
+				result += ( prepare( obj, delimiter ) + "\n" );
+			}
+
+		}
+		else {
+			if ( header ) {
+				result = ( array.keys( obj ).join( delimiter ) + "\n" );
+			}
+
+			result += ( array.cast( obj ).map( prepare ).join( delimiter ) + "\n" );
+		}
+
+		return result.replace( regex.eol_nl , "");
 	}
 };
 
@@ -3626,6 +3744,12 @@ var list = {
 		obj = new DataList( element.create( "ul", {"class": "list"}, target ), ref[0], template );
 
 		if ( options instanceof Object ) {
+			if ( options.listFiltered && options.listFilter ) {
+				obj.listFilter = filter.factory( element.create( "input", {"id": obj.element.id + "-filter", "class": "filter", placeholder: "Filter"}, target, "first" ), obj, options.listFilter, options.debounce || 250 );
+				delete options.listFilter;
+				delete options.listFiltered;
+			}
+
 			utility.merge( obj, options );
 		}
 
@@ -3726,6 +3850,7 @@ function DataList ( element, store, template ) {
 	this.filtered    = [];
 	this.id          = utility.genId();
 	this.items       = [];
+	this.listFilter  = null;
 	this.mutation    = null;
 	this.observer    = observable.factory();
 	this.pageIndex   = 1;
@@ -4206,20 +4331,30 @@ DataList.prototype.sort = function ( order ) {
  */
 DataList.prototype.teardown = function ( destroy ) {
 	destroy  = ( destroy === true );
-	var self = this;
+	var self = this,
+	    id   = this.element.id;
 
 	array.each( this.store.lists, function ( i, idx ) {
 		if ( i.id === self.id ) {
-			this.remove( idx );
+			array.remove( this, idx );
 
 			return false;
 		}
 	} );
 
-	delete this.observer.hooks[this.element.id];
+	delete this.observer.hooks[id];
+
+	if ( this.listFilter ) {
+		this.listFilter.teardown();
+	}
 
 	if ( destroy ) {
 		element.destroy( this.element );
+
+		array.each( utility.$( "#" + id + "-filter, #" + id + "-pages-top, #" + id + "-pages-bottom"), function ( i ) {
+			element.destroy( i );
+		} );
+
 		this.element = null;
 	}
 
@@ -4776,6 +4911,10 @@ var element = {
 	dispatch : function ( obj, type, data, bubbles, cancelable ) {
 		var ev;
 
+		if ( !obj ) {
+			return;
+		}
+
 		try {
 			ev = new CustomEvent( type );
 		}
@@ -5133,23 +5272,24 @@ var element = {
 	serialize : function ( obj, string, encode ) {
 		string       = ( string === true );
 		encode       = ( encode !== false );
-		var children = [],
-		    registry = {},
-		    result;
+		var registry = {},
+		    children, result;
 
 		children = obj.nodeName === "FORM" ? ( obj.elements ? array.cast( obj.elements ) : obj.find( "button, input, select, textarea" ) ) : [obj];
 
 		array.each( children, function ( i ) {
+			var id = i.id || i.name || i.type;
+
 			if ( i.nodeName === "FORM" ) {
 				utility.merge( registry, json.decode( element.serialize( i ) ) );
 			}
-			else if ( !registry[i.name] ) {
-				registry[i.name] = element.val( i );
+			else if ( !registry[id] ) {
+				registry[id] = element.val( i );
 			}
 		} );
 
 		if ( !string ) {
-			result = json.encode( registry );
+			result = registry;
 		}
 		else {
 			result = "";
@@ -5351,79 +5491,6 @@ var element = {
  */
 var json = {
 	/**
-	 * Transforms JSON to CSV
-	 *
-	 * @method csv
-	 * @memberOf json
-	 * @param  {Mixed}   arg       JSON, Array or Object
-	 * @param  {String}  delimiter [Optional] Character to separate fields
-	 * @param  {Boolean} header    [Optional] False to not include field names as first row
-	 * @return {String}            CSV string
-	 * @example
-	 * var csv = keigai.util.json.csv("[{\"prop\":\"value\"},{\"prop\":\"value2\"}]");
-	 * csv;
-	 * "prop
-	 *  value
-	 *  value2"
-	 */
-	csv : function ( arg, delimiter, header ) {
-		var obj    = json.decode( arg, true ) || arg,
-		    result = "";
-
-		delimiter  = delimiter || ",";
-		header     = ( header !== false );
-
-		// Prepares input based on CSV rules
-		function prepare ( input ) {
-			var output;
-
-			if ( input instanceof Array ) {
-				output = "\"" + input.toString() + "\"";
-
-				if ( regex.object_type.test( output ) ) {
-					output = "\"" + json.csv( input, delimiter ) + "\"";
-				}
-			}
-			else if ( input instanceof Object ) {
-				output = "\"" + json.csv( input, delimiter ) + "\"";
-			}
-			else if ( regex.csv_quote.test( input ) ) {
-				output = "\"" + input.replace( /"/g, "\"\"" ) + "\"";
-			}
-			else {
-				output = input;
-			}
-
-			return output;
-		}
-
-		if ( obj instanceof Array ) {
-			if ( obj[0] instanceof Object ) {
-				if ( header ) {
-					result = ( array.keys( obj[0] ).join( delimiter ) + "\n" );
-				}
-
-				result += obj.map( function ( i ) {
-					return json.csv( i, delimiter, false );
-				} ).join( "\n" );
-			}
-			else {
-				result += ( prepare( obj, delimiter ) + "\n" );
-			}
-
-		}
-		else {
-			if ( header ) {
-				result = ( array.keys( obj ).join( delimiter ) + "\n" );
-			}
-
-			result += ( array.cast( obj ).map( prepare ).join( delimiter ) + "\n" );
-		}
-
-		return result.replace( regex.eol_nl , "");
-	},
-
-	/**
 	 * Decodes the argument
 	 *
 	 * @method decode
@@ -5578,6 +5645,14 @@ var label = {
 	 * @memberOf label
 	 */
 	notAvailable : "Requested method is not available",
+
+	/**
+	 * No previous version of a record
+	 *
+	 * @type {String}
+	 * @memberOf label
+	 */
+	datastoreNoPrevVersion : "No previous version found",
 
 	/**
 	 * Server error has occurred
@@ -5929,7 +6004,13 @@ var store = {
 	 * @param  {Object} args [Optional] Arguments to set on the store
 	 * @return {Object} {@link keigai.DataStore}
 	 * @example
-	 * var store = keigai.store();
+	 * var store = keigai.store(null, {key: "guid"});
+	 *
+	 * store.setUri( "http://..." ).then( function ( records ) {
+	 *   // Do something with the records
+	 * }, function ( e ) {
+	 *   // Handle `e`
+	 * } );
 	 */
 	factory : function ( recs, args ) {
 		var obj = new DataStore();
@@ -5955,52 +6036,64 @@ var store = {
 	 * @private
 	 */
 	worker : function ( ev ) {
-		var cmd = ev.data.cmd,
-		    clauses, cond, result, where, functions;
+		var cmd     = ev.data.cmd,
+		    records = ev.data.records,
+		    clauses, cond, functions, indexes, index, result, sorted, where, values;
 
 		if ( cmd === "select" ) {
 			where     = JSON.parse( ev.data.where );
 			functions = ev.data.functions;
 			clauses   = array.fromObject( where );
+			sorted    = array.flat( clauses ).filter( function ( i, idx ) { return idx % 2 === 0; } ).sort( array.sort );
+			index     = sorted.join( "|" );
+			values    = sorted.map( function ( i ) { return where[i]; } ).join( "|" );
+			indexes   = ev.data.indexes;
 			cond      = "return ( ";
 
-			if ( clauses.length > 1 ) {
-				array.each( clauses, function ( i, idx ) {
-					var b1 = "( ";
-
-					if ( idx > 0 ) {
-						b1 = " && ( ";
-					}
-
-					if ( array.contains( functions, i[0] ) ) {
-						cond += b1 + i[1] + "( rec.data[\"" + i[0] + "\"] ) )";
-					}
-					else if ( !isNaN( i[1] ) ) {
-						cond += b1 + "rec.data[\"" + i[0] + "\"] === " + i[1] + " )";
-					}
-					else {
-						cond += b1 + "rec.data[\"" + i[0] + "\"] === \"" + i[1] + "\" )";
-					}
+			if ( functions.length === 0 && indexes[index] ) {
+				result = ( indexes[index][values] || [] ).map( function ( i ) {
+					return records[i];
 				} );
 			}
 			else {
-				if ( array.contains( functions, clauses[0][0] ) ) {
-					cond += clauses[0][1] + "( rec.data[\"" + clauses[0][0] + "\"] )";
-				}
-				else if ( !isNaN( clauses[0][1] ) ) {
-					cond += "rec.data[\"" + clauses[0][0] + "\"] === " + clauses[0][1];
+				if ( clauses.length > 1 ) {
+					array.each( clauses, function ( i, idx ) {
+						var b1 = "( ";
+
+						if ( idx > 0 ) {
+							b1 = " && ( ";
+						}
+
+						if ( array.contains( functions, i[0] ) ) {
+							cond += b1 + i[1] + "( rec.data[\"" + i[0] + "\"] ) )";
+						}
+						else if (!isNaN(i[1])) {
+							cond += b1 + "rec.data[\"" + i[0] + "\"] === " + i[1] + " )";
+						}
+						else {
+							cond += b1 + "rec.data[\"" + i[0] + "\"] === \"" + i[1] + "\" )";
+						}
+					} );
 				}
 				else {
-					cond += "rec.data[\"" + clauses[0][0] + "\"] === \"" + clauses[0][1] + "\"";
+					if ( array.contains( functions, clauses[0][0] ) ) {
+						cond += clauses[0][1] + "( rec.data[\"" + clauses[0][0] + "\"] )";
+					}
+					else if ( !isNaN( clauses[0][1] ) ) {
+						cond += "rec.data[\"" + clauses[0][0] + "\"] === " + clauses[0][1];
+					}
+					else {
+						cond += "rec.data[\"" + clauses[0][0] + "\"] === \"" + clauses[0][1] + "\"";
+					}
 				}
+
+				cond += " );";
+
+				result = records.filter( new Function("rec", cond ) );
 			}
-
-			cond += " );";
-
-			result = ev.data.records.filter( new Function( "rec", cond ) );
 		}
 		else if ( cmd === "sort" ) {
-			result = array.keySort( ev.data.records, ev.data.query, "data" );
+			result = array.keySort( records, ev.data.query, "data" );
 		}
 
 		postMessage( result );
@@ -6019,23 +6112,19 @@ var store = {
 function DataStore () {
 	this.autosave    = false;
 	this.callback    = null;
-	this.collections = [];
 	this.credentials = null;
 	this.lists       = [];
-	this.depth       = 0;
 	this.events      = true;
 	this.expires     = null;
 	this.headers     = {Accept: "application/json"};
 	this.ignore      = [];
+	this.index       = [];
+	this.indexes     = {key: {}};
 	this.key         = null;
-	this.keys        = {};
-	this.leafs       = [];
 	this.loaded      = false;
-	this.maxDepth    = 0;
 	this.mongodb     = "";
 	this.observer    = observable.factory();
 	this.records     = [];
-	this.retrieve    = false;
 	this.source      = null;
 	this.total       = 0;
 	this.versions    = {};
@@ -6082,73 +6171,78 @@ DataStore.prototype.constructor = DataStore;
  * } );
  */
 DataStore.prototype.batch = function ( type, data, sync ) {
-	if ( !regex.set_del.test( type ) || ( sync && regex.del.test( type ) ) || typeof data != "object" ) {
-		throw new Error( label.invalidArguments );
-	}
-
 	sync          = ( sync === true );
 	var self      = this,
 	    events    = this.events,
 	    defer     = deferred.factory(),
 	    deferreds = [];
 
-	if ( events ) {
-		this.dispatch( "beforeBatch", data );
-	}
-
-	if ( sync ) {
-		this.clear( sync );
-	}
-
-	if ( data.length === 0 ) {
-		this.loaded = true;
-
-		if ( events ) {
-			this.dispatch( "afterBatch", this.records );
-		}
-
-		defer.resolve( this.records );
+	if ( !regex.set_del.test( type ) || ( sync && regex.del.test( type ) ) || typeof data != "object" ) {
+		defer.reject( new Error( label.invalidArguments ) );
 	}
 	else {
-		if ( type === "del" ) {
-			array.each( data, function ( i ) {
-				deferreds.push( self.del( i, false, true ) );
-			} );
+		if ( events ) {
+			this.dispatch( "beforeBatch", data );
+		}
+
+		if ( sync ) {
+			this.clear( sync );
+		}
+
+		if ( data.length === 0 ) {
+			this.loaded = true;
+
+			if ( events ) {
+				this.dispatch( "afterBatch", this.records );
+			}
+
+			defer.resolve( this.records );
 		}
 		else {
-			array.each( data, function ( i ) {
-				deferreds.push( self.set( null, i, true ) );
+			// Batch deletion will create a sparse array, which will be compacted before re-indexing
+			if ( type === "del" ) {
+				array.each( data, function ( i ) {
+					deferreds.push( self.del( i, false, true ) );
+				} );
+			}
+			else {
+				array.each( data, function ( i ) {
+					deferreds.push( self.set( null, i, true ) );
+				} );
+			}
+
+			this.loaded = false;
+
+			utility.when( deferreds ).then( function ( args ) {
+				self.loaded = true;
+
+				if ( events ) {
+					self.dispatch( "afterBatch", args );
+				}
+
+				// Forcing a clear of views to deal with async nature of workers & staggered loading
+				array.each( self.lists, function ( i ) {
+					i.refresh( true );
+				} );
+
+				if ( type === "del" ) {
+					self.records = array.compact( self.records );
+					self.reindex();
+				}
+
+				if ( self.autosave ) {
+					self.save();
+				}
+
+				defer.resolve( args );
+			}, function ( e ) {
+				if ( events ) {
+					self.dispatch( "failedBatch", e );
+				}
+
+				defer.reject( e );
 			} );
 		}
-
-		utility.when( deferreds ).then( function () {
-			self.loaded = true;
-
-			if ( events ) {
-				self.dispatch( "afterBatch", self.records );
-			}
-
-			// Forcing a clear of views to deal with async nature of workers & staggered loading
-			array.each( self.lists, function ( i ) {
-				i.refresh( true );
-			} );
-
-			if ( type === "del" ) {
-				self.reindex();
-			}
-
-			if ( self.autosave ) {
-				self.save();
-			}
-
-			defer.resolve( self.records );
-		}, function ( e ) {
-			if ( events ) {
-				self.dispatch( "failedBatch", e );
-			}
-
-			defer.reject( e );
-		} );
 	}
 
 	return defer;
@@ -6188,7 +6282,8 @@ DataStore.prototype.buildUri = function ( key ) {
  */
 DataStore.prototype.clear = function ( sync ) {
 	sync       = ( sync === true );
-	var events = ( this.events === true );
+	var events = ( this.events === true ),
+	    resave = ( this.autosave === true );
 
 	if ( !sync ) {
 		if ( events ) {
@@ -6196,26 +6291,24 @@ DataStore.prototype.clear = function ( sync ) {
 		}
 
 		array.each( this.lists, function ( i ) {
-			i.teardown( true );
+			if ( i ) {
+				i.teardown( true );
+			}
 		} );
 
 		this.autosave    = false;
 		this.callback    = null;
-		this.collections = [];
 		this.credentials = null;
 		this.lists       = [];
-		this.depth       = 0;
 		this.events      = true;
 		this.expires     = null;
 		this.headers     = {Accept: "application/json"};
 		this.ignore      = [];
+		this.index       = [];
+		this.indexes     = {key: {}};
 		this.key         = null;
-		this.keys        = {};
-		this.leafs       = [];
 		this.loaded      = false;
-		this.maxDepth    = 0;
 		this.records     = [];
-		this.retrieve    = false;
 		this.source      = null;
 		this.total       = 0;
 		this.versions    = {};
@@ -6228,145 +6321,24 @@ DataStore.prototype.clear = function ( sync ) {
 		}
 	}
 	else {
-		this.collections = [];
-		this.keys        = {};
+		this.indexes     = {key: {}};
 		this.loaded      = false;
 		this.records     = [];
 		this.total       = 0;
 		this.views       = {};
 
 		array.each( this.lists, function ( i ) {
-			i.refresh();
+			if ( i ) {
+				i.refresh();
+			}
 		} );
+	}
+
+	if ( resave ) {
+		this.save();
 	}
 
 	return this;
-};
-
-/**
- * Crawls a record's properties and creates DataStores when URIs are detected
- *
- * @method crawl
- * @memberOf keigai.DataStore
- * @param  {Mixed}  arg Record, key or index
- * @return {Object} {@link keigai.Deferred}
- * @fires keigai.DataStore#beforeRetrieve Fires before crawling a record
- * @fires keigai.DataStore#afterRetrieve Fires after the store has retrieved all data from crawling
- * @fires keigai.DataStore#failedRetrieve Fires if an exception occurs
- * @example
- * store.crawl( "key" ).then( function () {
- *   ...
- * }, function ( err ) {
- *   ...
- * } );
- */
-DataStore.prototype.crawl = function ( arg ) {
-	var self      = this,
-	    events    = ( this.events === true ),
-	    record    = ( arg instanceof Object ) ? arg : this.get( arg ),
-	    defer     = deferred.factory(),
-	    deferreds = [],
-	    parsed    = utility.parse( this.uri || "" ),
-	    clone;
-
-	if ( this.uri === null || record === undefined ) {
-		throw new Error( label.invalidArguments );
-	}
-
-	if ( events ) {
-		this.dispatch( "beforeRetrieve", record );
-	}
-
-	// An Array is considered a collection
-	if ( record.data instanceof Array ) {
-		clone       = utility.clone( record.data );
-		record.data = {};
-
-		array.each( clone, function ( i ) {
-			var key = i.replace( /.*\//, "" ),
-			    uri;
-
-			record.data[key] = store.factory( null, {id: record.key + "-" + key, key: self.key, pointer: self.pointer, source: self.source, ignore: self.ignore.slice(), leafs: self.leafs.slice(), depth: self.depth + 1, maxDepth: self.maxDepth, headers: self.headers, retrieve: true} );
-
-			if ( i.indexOf( "//" ) === -1 ) {
-				// Relative path to store, i.e. a child
-				if ( i.charAt( 0 ) !== "/" ) {
-					uri = self.buildUri( i );
-				}
-				// Root path, relative to store, i.e. a domain
-				else {
-					uri = parsed.protocol + "//" + parsed.host + i;
-				}
-			}
-			else {
-				uri = i;
-			}
-
-			deferreds.push( record.data[key].data.setUri( uri ) );
-		} );
-	}
-	else {
-		// Depth of recursion is controled by `maxDepth`
-		utility.iterate( record.data, function ( v, k ) {
-			var uri;
-
-			if ( array.contains( self.ignore, k ) || array.contains( self.leafs, k ) || self.depth >= self.maxDepth || ( !( v instanceof Array ) && typeof v != "string" ) || ( v.indexOf( "//" ) === -1 && v.charAt( 0 ) !== "/" ) ) {
-				return;
-			}
-
-			array.add( self.collections, k );
-
-			record.data[k] = store.factory( null, {id: record.key + "-" + k, key: self.key, source: self.source, ignore: self.ignore.slice(), leafs: self.leafs.slice(), depth: self.depth + 1, maxDepth: self.maxDepth, headers: self.headers, retrieve: true} );
-
-			if ( !array.contains( self.leafs, k ) && ( record.data[k].data.maxDepth === 0 || record.data[k].data.depth <= record.data[k].data.maxDepth ) ) {
-				if ( v instanceof Array ) {
-					deferreds.push( record.data[k].data.batch( "set", v ) );
-				}
-				else {
-					if ( v.indexOf( "//" ) === -1 ) {
-						// Relative path to store, i.e. a child
-						if ( v.charAt( 0 ) !== "/" ) {
-							uri = self.buildUri( v );
-						}
-						// Root path, relative to store, i.e. a domain
-						else {
-							uri = parsed.protocol + "//" + parsed.host + v;
-						}
-					}
-					else {
-						uri = v;
-					}
-
-					deferreds.push( record.data[k].data.setUri( uri ) );
-				}
-			}
-		} );
-	}
-
-	if ( deferreds.length > 0 ) {
-		utility.when( deferreds ).then( function () {
-			if ( events ) {
-				self.dispatch( "afterRetrieve", record );
-			}
-
-			defer.resolve( record );
-		}, function ( e ) {
-			if ( events ) {
-				self.dispatch( "failedRetrieve", record );
-			}
-
-			defer.reject( e );
-		} );
-	}
-	else {
-		if ( events ) {
-			self.dispatch( "afterRetrieve", record );
-		}
-
-		defer.resolve( record );
-	}
-
-	return defer;
 };
 
 /**
@@ -6407,12 +6379,12 @@ DataStore.prototype.del = function ( record, reindex, batch ) {
 			this.delComplete( record, reindex, batch, defer );
 		}
 		else {
-			client.request( this.buildUri( record.key ), "DELETE", function () {
+			client.request( this.buildUri( record.key ), "DELETE", null, utility.merge( {withCredentials: this.credentials}, this.headers ) ).then( function () {
 				self.delComplete( record, reindex, batch, defer );
 			}, function ( e ) {
 				self.dispatch( "failedDelete", e );
 				defer.reject( e );
-			}, undefined, utility.merge( {withCredentials: this.credentials}, this.headers ) );
+			} );
 		}
 	}
 
@@ -6432,21 +6404,28 @@ DataStore.prototype.del = function ( record, reindex, batch ) {
  * @private
  */
 DataStore.prototype.delComplete = function ( record, reindex, batch, defer ) {
-	delete this.keys[record.key];
-	delete this.versions[record.key];
+	var self = this;
 
-	this.records.remove( record.index );
+	delete this.indexes.key[record.key];
+	delete this.versions[record.key];
 
 	this.total--;
 	this.views = {};
 
-	array.each( this.collections, function ( i ) {
-		record.data[i].teardown();
-	} );
-
 	if ( !batch ) {
+		array.remove( this.records, record.index );
+
 		if ( reindex ) {
 			this.reindex();
+		}
+		else {
+			array.each( record.indexes, function ( i ) {
+				array.remove( self.indexes[i[0]][i[1]], record.index );
+
+				if ( self.indexes[i[0]][i[1]].length === 0 ) {
+					delete self.indexes[i[0]][i[1]];
+				}
+			} );
 		}
 
 		if ( this.autosave ) {
@@ -6461,10 +6440,11 @@ DataStore.prototype.delComplete = function ( record, reindex, batch, defer ) {
 			i.refresh();
 		} );
 	}
+	else {
+		this.records[record.index] = null;
+	}
 
-	defer.resolve( record.key );
-
-	return this;
+	return defer.resolve( record.key );
 };
 
 /**
@@ -6490,7 +6470,7 @@ DataStore.prototype.dump = function ( args, fields ) {
 			var record = {};
 
 			array.each( fields, function ( f ) {
-				record[f] = f === self.key ? i.key : ( !array.contains( self.collections, f ) ? utility.clone( i.data[f], true ) : i.data[f].data.uri );
+				record[f] = f === self.key ? ( isNaN( i.key ) ? i.key : Number( i.key ) ) : utility.clone( i.data[f], true );
 			} );
 
 			return record;
@@ -6501,11 +6481,11 @@ DataStore.prototype.dump = function ( args, fields ) {
 			var record = {};
 
 			if ( key ) {
-				record[self.key] = i.key;
+				record[self.key] = isNaN( i.key ) ? i.key : Number( i.key );
 			}
 
 			utility.iterate( i.data, function ( v, k ) {
-				record[k] = !array.contains( self.collections, k ) ? utility.clone( v, true ) : v.data.uri;
+				record[k] = utility.clone( v, true );
 			} );
 
 			return record;
@@ -6516,7 +6496,7 @@ DataStore.prototype.dump = function ( args, fields ) {
 };
 
 /**
- * Retrieves a record based on key or index
+ * Retrieves the current version of a record(s) based on key or index
  *
  * If the key is an integer, cast to a string before sending as an argument!
  *
@@ -6529,39 +6509,38 @@ DataStore.prototype.dump = function ( args, fields ) {
  * var record = store.get( "key" );
  */
 DataStore.prototype.get = function ( record, offset ) {
-	var records = this.records,
-	    type    = typeof record,
-	    self    = this,
-	    r;
+	var type = typeof record,
+	    self = this,
+	    result;
 
 	if ( type === "undefined" ) {
-		r = records;
+		result = this.records;
 	}
 	else if ( type === "string" ) {
 		if ( record.indexOf( "," ) === -1 ) {
-			r = records[self.keys[record]];
+			result = this.records[this.indexes.key[record]];
 		}
 		else {
-			r = string.explode( record ).map( function ( i ) {
+			result = string.explode( record ).map( function ( i ) {
 				if ( !isNaN( i ) ) {
-					return records[parseInt( i, 10 )];
+					return self.records[parseInt( i, 10 )];
 				}
 				else {
-					return records[self.keys[i]];
+					return self.records[self.indexes.key[i]];
 				}
 			} );
 		}
 	}
 	else if ( type === "number" ) {
 		if ( isNaN( offset ) ) {
-			r = records[parseInt( record, 10 )];
+			result = this.records[parseInt( record, 10 )];
 		}
 		else {
-			r = array.limit( records, parseInt( record, 10 ), parseInt( offset, 10 ) );
+			result = array.limit( this.records, parseInt( record, 10 ), parseInt( offset, 10 ) );
 		}
 	}
 
-	return r;
+	return utility.clone( result, true );
 },
 
 /**
@@ -6582,13 +6561,13 @@ DataStore.prototype.join = function ( arg, field, join ) {
 	    results   = [],
 	    deferreds = [],
 	    key       = field === this.key,
-	    keys      = array.merge( array.cast( this.records[0].data, true ), array.cast( arg.records[0].data, true ) ),
-		fn;
+	    keys      = array.merge( array.keys( this.records[0].data ), array.keys( arg.records[0].data ) ),
+	    fn;
 
 	if ( join === "inner" ) {
 		fn = function ( i ) {
 			var where  = {},
-			    record = utility.clone( i.data, true ),
+			    record = i.data,
 			    defer  = deferred.factory();
 
 			where[field] = key ? i.key : record[field];
@@ -6612,7 +6591,7 @@ DataStore.prototype.join = function ( arg, field, join ) {
 	else if ( join === "left" ) {
 		fn = function ( i ) {
 			var where  = {},
-			    record = utility.clone( i.data, true ),
+				record = i.data,
 			    defer  = deferred.factory();
 
 			where[field] = key ? i.key : record[field];
@@ -6643,7 +6622,7 @@ DataStore.prototype.join = function ( arg, field, join ) {
 	else if ( join === "right" ) {
 		fn = function ( i ) {
 			var where  = {},
-			    record = utility.clone( i.data, true ),
+			    record = i.data,
 			    defer  = deferred.factory();
 
 			where[field] = key ? i.key : record[field];
@@ -6672,7 +6651,7 @@ DataStore.prototype.join = function ( arg, field, join ) {
 		};
 	}
 
-	array.each( join === "right" ? arg.records : this.records, fn );
+	array.each( utility.clone( join === "right" ? arg.records : this.records, true ), fn );
 
 	utility.when( deferreds ).then( function () {
 		defer.resolve( results );
@@ -6730,17 +6709,25 @@ DataStore.prototype.purge = function ( arg ) {
  * store.reindex();
  */
 DataStore.prototype.reindex = function () {
-	var nth = this.total,
-	    i   = -1;
+	var self = this,
+	    i    = -1,
+	    tmp  = [];
 
-	this.views = {};
+	this.views   = {};
+	this.indexes = {key: {}};
 
-	if ( nth > 0 ) {
-		while ( ++i < nth ) {
-			this.records[i].index = i;
-			this.keys[this.records[i].key] = i;
-		}
+	if ( this.total > 0 ) {
+		array.each( this.records, function ( record ) {
+			if ( record !== undefined ) {
+				tmp[++i]     = record;
+				record.index = i;
+				self.indexes.key[record.key] = i;
+				self.setIndexes( record );
+			}
+		} );
 	}
+
+	this.records = tmp;
 
 	return this;
 };
@@ -6790,16 +6777,15 @@ DataStore.prototype.save = function ( arg ) {
  * } );
  */
 DataStore.prototype.select = function ( where ) {
-	var defer = deferred.factory(),
-	    clauses, cond, functions, worker;
+	var self      = this,
+	    defer     = deferred.factory(),
+	    functions = [],
+	    clauses, cond, index, result, sorted, values, worker;
 
 	if ( !( where instanceof Object ) ) {
-		throw new Error( label.invalidArguments );
+		defer.reject( new Error( label.invalidArguments ) );
 	}
-
-	if ( webWorker ) {
-		functions = [];
-
+	else {
 		utility.iterate( where, function ( v, k ) {
 			if ( typeof v == "function" ) {
 				this[k] = v.toString();
@@ -6807,59 +6793,73 @@ DataStore.prototype.select = function ( where ) {
 			}
 		} );
 
-		try {
-			worker = utility.worker( defer );
-			worker.postMessage( {cmd: "select", records: this.records, where: json.encode( where ), functions: functions} );
-		}
-		catch ( e ) {
-			// Probably IE10, which doesn't have the correct security flag for local loading
-			webWorker = false;
+		if ( webWorker ) {
+			try {
+				worker = utility.worker( defer );
+				worker.postMessage( {cmd: "select", indexes: this.indexes, records: this.records, where: json.encode( where ), functions: functions} );
+			}
+			catch ( e ) {
+				// Probably IE10, which doesn't have the correct security flag for local loading
+				webWorker = false;
 
-			this.select( where ).then( function ( arg ) {
-				defer.resolve( arg );
-			}, function ( e ) {
-				defer.reject( e );
-			} );
-		}
-	}
-	else {
-		clauses = array.fromObject( where );
-		cond    = "return ( ";
-
-		if ( clauses.length > 1 ) {
-			array.each( clauses, function ( i, idx ) {
-				var b1 = "( ";
-
-				if ( idx > 0 ) {
-					b1 = " && ( ";
-				}
-
-				if ( i[1] instanceof Function ) {
-					cond += b1 + i[1].toString() + "( rec.data[\"" + i[0] + "\"] ) )";
-				}
-				else if ( !isNaN( i[1] ) ) {
-					cond += b1 + "rec.data[\"" + i[0] + "\"] === " + i[1] + " )";
-				}
-				else {
-					cond += b1 + "rec.data[\"" + i[0] + "\"] === \"" + i[1] + "\" )";
-				}
-			} );
+				this.select( where ).then( function ( arg ) {
+					defer.resolve( arg );
+				}, function ( e ) {
+					defer.reject( e );
+				} );
+			}
 		}
 		else {
-			if ( clauses[0][1] instanceof Function ) {
-				cond += clauses[0][1].toString() + "( rec.data[\"" + clauses[0][0] + "\"] )";
-			}
-			else if ( !isNaN( clauses[0][1] ) ) {
-				cond += "rec.data[\"" + clauses[0][0] + "\"] === " + clauses[0][1];
+			clauses = array.fromObject( where );
+			sorted  = array.flat( clauses ).filter( function ( i, idx ) { return idx % 2 === 0; } ).sort( array.sort );
+			index   = sorted.join( "|" );
+			values  = sorted.map( function ( i ) { return where[i]; } ).join( "|" );
+			cond    = "return ( ";
+
+			if ( functions.length === 0 && this.indexes[index] ) {
+				result = ( this.indexes[index][values] || [] ).map( function ( i ) {
+					return self.records[i];
+				} );
 			}
 			else {
-				cond += "rec.data[\"" + clauses[0][0] + "\"] === \"" + clauses[0][1] + "\"";
+				if ( clauses.length > 1 ) {
+					array.each( clauses, function ( i, idx ) {
+						var b1 = "( ";
+
+						if ( idx > 0 ) {
+							b1 = " && ( ";
+						}
+
+						if ( i[1] instanceof Function ) {
+							cond += b1 + i[1].toString() + "( rec.data[\"" + i[0] + "\"] ) )";
+						}
+						else if ( !isNaN( i[1] ) ) {
+							cond += b1 + "rec.data[\"" + i[0] + "\"] === " + i[1] + " )";
+						}
+						else {
+							cond += b1 + "rec.data[\"" + i[0] + "\"] === \"" + i[1] + "\" )";
+						}
+					} );
+				}
+				else {
+					if ( clauses[0][1] instanceof Function ) {
+						cond += clauses[0][1].toString() + "( rec.data[\"" + clauses[0][0] + "\"] )";
+					}
+					else if ( !isNaN( clauses[0][1] ) ) {
+						cond += "rec.data[\"" + clauses[0][0] + "\"] === " + clauses[0][1];
+					}
+					else {
+						cond += "rec.data[\"" + clauses[0][0] + "\"] === \"" + clauses[0][1] + "\"";
+					}
+				}
+
+				cond += " );";
+
+				result = utility.clone( this.records, true ).filter( new Function( "rec", cond ) );
 			}
+
+			defer.resolve( result );
 		}
-
-		cond += " );";
-
-		defer.resolve( this.records.slice().filter( new Function( "rec", cond ) ) );
 	}
 
 	return defer;
@@ -6870,9 +6870,10 @@ DataStore.prototype.select = function ( where ) {
  *
  * @method set
  * @memberOf keigai.DataStore
- * @param  {Mixed}   key   [Optional] Integer or String to use as a Primary Key
- * @param  {Object}  data  Key:Value pairs to set as field values
- * @param  {Boolean} batch [Optional] True if called by data.batch
+ * @param  {Mixed}   key       [Optional] Integer or String to use as a Primary Key
+ * @param  {Object}  data      Key:Value pairs to set as field values
+ * @param  {Boolean} batch     [Optional] True if called by data.batch
+ * @param  {Boolean} overwrite [Optional] Overwrites the existing record, if found
  * @return {Object} {@link keigai.Deferred}
  * @fires keigai.DataStore#beforeSet Fires before the record is set
  * @fires keigai.DataStore#afterSet Fires after the record is set, the record is the argument for listeners
@@ -6884,16 +6885,40 @@ DataStore.prototype.select = function ( where ) {
  * // Updating a record
  * store.set( "key", {...} );
  */
-DataStore.prototype.set = function ( key, data, batch ) {
+DataStore.prototype.set = function ( key, data, batch, overwrite ) {
 	data       = utility.clone( data, true );
 	batch      = ( batch === true );
+	overwrite  = ( overwrite === true );
 	var self   = this,
 	    events = this.events,
 	    defer  = deferred.factory(),
 	    record = key !== null ? this.get( key ) || null : data[this.key] ? this.get( data[this.key] ) || null : null,
 	    method = "POST",
 	    parsed = utility.parse( self.uri || "" ),
-	    uri;
+	    uri, odata, rdefer;
+
+	function patch ( overwrite, data, ogdata ) {
+		var ndata = [];
+
+		if ( overwrite ) {
+			array.each( array.keys( ogdata ), function ( k ) {
+				if ( k !== self.key && data[k] === undefined ) {
+					ndata.push( { op: "remove", path: "/" + k } );
+				}
+			} );
+		}
+
+		utility.iterate( data, function ( v, k ) {
+			if ( k !== self.key && ogdata[k] === undefined ) {
+				ndata.push( { op: "add", path: "/" + k, value: v } );
+			}
+			else if ( json.encode( ogdata[k] ) !== json.encode( v ) ) {
+				ndata.push( { op: "replace", path: "/" + k, value: v } );
+			}
+		} );
+
+		return ndata;
+	}
 
 	if ( typeof data == "string" ) {
 		if ( data.indexOf( "//" ) === -1 ) {
@@ -6923,12 +6948,12 @@ DataStore.prototype.set = function ( key, data, batch ) {
 				self.dispatch( "beforeSet", {key: key, data: data} );
 			}
 
-			client.request( uri, "GET", function ( arg ) {
-				self.setComplete( record, key, self.source ? arg[self.source] : arg, batch, defer );
+			client.request( uri, "GET", null, utility.merge( {withCredentials: self.credentials}, self.headers ) ).then( function ( arg ) {
+				self.setComplete( record, key, self.source ? utility.walk( arg, self.source ) : arg, batch, overwrite, defer );
 			}, function ( e ) {
 				self.dispatch( "failedSet", e );
 				defer.reject( e );
-			}, undefined, utility.merge( {withCredentials: self.credentials}, self.headers ) );
+			} );
 		}
 	}
 	else {
@@ -6937,34 +6962,53 @@ DataStore.prototype.set = function ( key, data, batch ) {
 		}
 
 		if ( batch || this.uri === null ) {
-			this.setComplete( record, key, data, batch, defer );
+			this.setComplete( record, key, data, batch, overwrite, defer );
 		}
 		else {
 			if ( key !== null ) {
-				method = "PUT";
 				uri    = this.buildUri( key );
-
-				if ( client.allows( uri, "patch" ) ) {
-					method = "PATCH";
-				}
-				else if ( record !== null ) {
-					utility.iterate( record.data, function ( v, k ) {
-						if ( !array.contains( self.collections, k ) && !data[k] ) {
-							data[k] = v;
-						}
-					} );
-				}
+				method = "PATCH";
+				odata  = utility.clone( data, true );
+				data   = patch( overwrite, data, this.dump( [ record ] )[ 0 ] );
 			}
 			else {
-				uri = this.uri;
+				// Dropping query string
+				uri = parsed.protocol + "//" + parsed.host + parsed.pathname;
 			}
 
-			client.request( uri, method, function ( arg ) {
-				self.setComplete( record, key, self.source ? arg[self.source] : arg, batch, defer );
+			rdefer = client.request( uri, method, data, utility.merge( {withCredentials: this.credentials}, this.headers ) );
+			rdefer.then( function ( arg ) {
+				var change;
+
+				if ( rdefer.xhr.status !== 204 && rdefer.xhr.status < 300 ) {
+					change = key === null ? ( self.source ? utility.walk( arg, self.source ) : arg ) : odata;
+				}
+				else {
+					change = odata;
+				}
+
+				self.setComplete( record, key, change, batch, overwrite, defer );
 			}, function ( e ) {
-				self.dispatch( "failedSet", e );
-				defer.reject( e );
-			}, data, utility.merge( {withCredentials: this.credentials}, this.headers ) );
+				if ( method == "PATCH" ) {
+					method = "PUT";
+					data   = utility.clone( odata, true );
+
+					utility.iterate( record.data, function ( v, k ) {
+						data[k] = v;
+					} );
+
+					client.request( uri, method, data, utility.merge( {withCredentials: self.credentials}, self.headers ) ).then( function () {
+						self.setComplete( record, key, odata, batch, overwrite, defer );
+					}, function ( e ) {
+						self.dispatch( "failedSet", e );
+						defer.reject( e );
+					} );
+				}
+				else {
+					self.dispatch( "failedSet", e );
+					defer.reject( e );
+				}
+			} );
 		}
 	}
 
@@ -6976,24 +7020,22 @@ DataStore.prototype.set = function ( key, data, batch ) {
  *
  * @method setComplete
  * @memberOf keigai.DataStore
- * @param  {Mixed}   record DataStore record, or `null` if new
- * @param  {String}  key    Record key
- * @param  {Object}  data   Record data
- * @param  {Boolean} batch  `true` if part of a batch operation
- * @param  {Object}  defer  Deferred instance
+ * @param  {Mixed}   record    DataStore record, or `null` if new
+ * @param  {String}  key       Record key
+ * @param  {Object}  data      Record data
+ * @param  {Boolean} batch     `true` if part of a batch operation
+ * @param  {Boolean} overwrite Overwrites the existing record, if found
+ * @param  {Object}  defer     Deferred instance
  * @return {Object} {@link keigai.DataStore}
  * @private
  */
-DataStore.prototype.setComplete = function ( record, key, data, batch, defer ) {
-	var self      = this,
-	    deferreds = [];
-
+DataStore.prototype.setComplete = function ( record, key, data, batch, overwrite, defer ) {
 	// Clearing views
 	this.views = {};
 
 	// Setting key
-	if ( !key ) {
-		if ( this.key !== null && data[this.key] ) {
+	if ( key === null ) {
+		if ( this.key !== null && data[this.key] !== undefined && data[this.key] !== null ) {
 			key = data[this.key].toString();
 		}
 		else {
@@ -7009,55 +7051,63 @@ DataStore.prototype.setComplete = function ( record, key, data, batch, defer ) {
 	// Create
 	if ( record === null ) {
 		record = {
-			index : this.total++,
-			key   : key,
-			data  : data
+			index   : this.total++,
+			key     : key,
+			data    : data,
+			indexes : []
 		};
 
-		this.keys[key]                = record.index;
+		this.indexes.key[key]         = record.index;
 		this.records[record.index]    = record;
-		this.versions[record.key]     = lru.factory( VERSIONS );
-		this.versions[record.key].nth = 0;
 
-		if ( this.retrieve ) {
-			deferreds.push( this.crawl( record ) );
+		if ( this.versioning ) {
+			this.versions[record.key] = lru.factory( VERSIONS );
+			this.versions[record.key].nth = 0;
 		}
 	}
 	// Update
 	else {
 		if ( this.versioning ) {
+			if ( this.versions[record.key] === undefined ) {
+				this.versions[record.key]     = lru.factory( VERSIONS );
+				this.versions[record.key].nth = 0;
+			}
+
 			this.versions[record.key].set( "v" + ( ++this.versions[record.key].nth ), this.dump( [record] )[0] );
 		}
 
+		// By reference
+		record = this.records[record.index];
+
+		if ( overwrite ) {
+			record.data = {};
+		}
+
 		utility.iterate( data, function ( v, k ) {
-			if ( !array.contains( self.collections, k ) ) {
-				record.data[k] = v;
-			}
-			else if ( typeof v == "string" ) {
-				deferreds.push( record.data[k].data.setUri( record.data[k].data.uri + "/" + v, true ) );
-			}
-			else {
-				deferreds.push( record.data[k].data.batch( "set", v, true ) );
-			}
+			record.data[k] = v;
 		} );
+
+		// Snapshot that's safe to hand out
+		record = utility.clone( record, true );
 	}
 
-	if ( !batch && this.events ) {
-		self.dispatch( "afterSet", record );
+	this.setIndexes( record );
+
+	if ( !batch ) {
+		if ( this.autosave ) {
+			this.save();
+		}
+
+		if ( this.events ) {
+			this.dispatch( "afterSet", record );
+		}
 
 		array.each( this.lists, function ( i ) {
 			i.refresh();
 		} );
 	}
 
-	if ( deferreds.length === 0 ) {
-		defer.resolve( record );
-	}
-	else {
-		utility.when( deferreds ).then( function () {
-			defer.resolve( record );
-		} );
-	}
+	defer.resolve( record );
 
 	return this;
 };
@@ -7073,6 +7123,10 @@ DataStore.prototype.setComplete = function ( record, key, data, batch, defer ) {
  * store.setExpires( 5 * 60 * 1000 ); // Resyncs every 5 minutes
  */
 DataStore.prototype.setExpires = function ( arg ) {
+	var id      = this.id + "Expire",
+	    expires = arg,
+	    self    = this;
+
 	// Expiry cannot be less than a second, and must be a valid scenario for consumption; null will disable repetitive expiration
 	if ( ( arg !== null && this.uri === null ) || ( arg !== null && ( isNaN( arg ) || arg < 1000 ) ) ) {
 		throw new Error( label.invalidArguments );
@@ -7083,10 +7137,6 @@ DataStore.prototype.setExpires = function ( arg ) {
 	}
 
 	this.expires = arg;
-
-	var id      = this.id + "Expire",
-	    expires = arg,
-	    self    = this;
 
 	utility.clearTimers( id );
 
@@ -7109,6 +7159,49 @@ DataStore.prototype.setExpires = function ( arg ) {
 };
 
 /**
+ * Sets indexes for a record using `store.indexes`
+ *
+ * Composite indexes are supported, but require keys be in alphabetical order, e.g. "age|name"
+ *
+ * @method setIndexes
+ * @memberOf keigai.DataStore
+ * @param  {Object} arg DataStore Record
+ * @return {Object} {@link keigai.DataStore}
+ * @example
+ * store.setIndexes( record );
+ */
+DataStore.prototype.setIndexes = function ( arg ) {
+	var self     = this,
+	    delimter = "|";
+
+	arg.indexes = [];
+
+	array.each( this.index, function ( i ) {
+		var keys   = i.split( delimter ),
+		    values = "";
+
+		if ( self.indexes[i] === undefined ) {
+			self.indexes[i] = {};
+		}
+
+		array.each( keys, function ( k, kdx ) {
+			values += ( kdx > 0 ? delimter : "" ) + arg.data[k];
+		} );
+
+		if ( self.indexes[i][values] === undefined ) {
+			self.indexes[i][values] = [];
+		}
+
+		if ( !array.contains( self.indexes[i][values], arg.index ) ) {
+			self.indexes[i][values].push( arg.index );
+			arg.indexes.push( [i, values] );
+		}
+	} );
+
+	return this;
+};
+
+/**
  * Sets the RESTful API end point
  *
  * @method setUri
@@ -7124,36 +7217,23 @@ DataStore.prototype.setExpires = function ( arg ) {
  */
 DataStore.prototype.setUri = function ( arg ) {
 	var defer = deferred.factory(),
-	    parsed, uri;
+	    parsed;
 
 	if ( arg !== null && string.isEmpty( arg ) ) {
-		throw new Error( label.invalidArguments );
+		defer.reject( new Error( label.invalidArguments ) );
 	}
 
-	parsed = utility.parse( arg );
-	uri    = parsed.href;
-
-	// Re-encoding the query string for the request
-	if ( array.keys( parsed.query ).length > 0 ) {
-		uri = uri.replace( /\?.*/, "?" );
-
-		utility.iterate( parsed.query, function ( v, k ) {
-			if ( !( v instanceof Array ) ) {
-				uri += "&" + k + "=" + encodeURIComponent( v );
-			}
-			else {
-				array.each( v, function ( i ) {
-					uri += "&" + k + "=" + encodeURIComponent( i );
-				} );
-			}
-		} );
-
-		uri = uri.replace( "?&", "?" );
+	if ( arg === null ) {
+		this.uri = arg;
 	}
+	else {
+		parsed   = utility.parse( arg );
+		this.uri = parsed.protocol + "//" + parsed.host + parsed.path;
 
-	this.uri = uri;
+		if ( !string.isEmpty( parsed.auth ) && !this.headers.authorization && !this.headers.Authorization ) {
+			this.headers.Authorization = "Basic " + btoa( decodeURIComponent( parsed.auth ) );
+		}
 
-	if ( this.uri !== null ) {
 		this.on( "expire", function () {
 			this.sync();
 		}, "resync", this );
@@ -7164,7 +7244,7 @@ DataStore.prototype.setUri = function ( arg ) {
 			defer.resolve( arg );
 		}, function ( e ) {
 			defer.reject( e );
-		});
+		} );
 	}
 
 	return defer;
@@ -7207,32 +7287,34 @@ DataStore.prototype.sort = function ( query, create, where ) {
 
 				return self.views[view];
 			}, function ( e ) {
-				throw e;
+				utility.error( e );
 			} );
 
 			try {
 				worker = utility.worker( defer );
-				worker.postMessage( {cmd: "sort", records: records, query: query} );
+				worker.postMessage( {cmd: "sort", indexes: self.indexes, records: records, query: query} );
 			}
 			catch ( e ) {
 				// Probably IE10, which doesn't have the correct security flag for local loading
 				webWorker = false;
 
-				self.views[view] = array.keySort( records.slice(), query, "data" );
+				self.views[view] = array.keySort( records, query, "data" );
 				defer.resolve( self.views[view] );
 			}
 		}
 		else {
-			self.views[view] = array.keySort( records.slice(), query, "data" );
+			self.views[view] = array.keySort( records, query, "data" );
 			defer.resolve( self.views[view] );
 		}
 	};
 
 	if ( !where ) {
-		next( this.records );
+		next( utility.clone( this.records, true ) );
 	}
 	else {
-		this.select( where ).then( next );
+		this.select( where ).then( next, function ( e ) {
+			defer.reject( e );
+		} );
 	}
 
 	return defer;
@@ -7258,45 +7340,51 @@ DataStore.prototype.storage = function ( obj, op, type ) {
 	    mongo   = !string.isEmpty( this.mongodb ),
 	    session = ( type === "session" && typeof sessionStorage != "undefined" ),
 	    defer   = deferred.factory(),
-	    data, deferreds, key, result;
+	    data, key, result;
 
 	if ( !regex.number_string_object.test( typeof obj ) || !regex.get_remove_set.test( op ) ) {
-		throw new Error( label.invalidArguments );
+		defer.reject( new Error( label.invalidArguments ) );
 	}
+	else {
+		record = ( regex.number_string.test( typeof obj ) || obj.hasOwnProperty( "data" ) );
 
-	record = ( regex.number_string.test( typeof obj ) || ( obj.hasOwnProperty( "key" ) && !obj.hasOwnProperty( "parentNode" ) ) );
+		if ( op !== "remove" ) {
+			if ( record && !( obj instanceof Object ) ) {
+				obj = this.get( obj );
+			}
 
-	if ( op !== "remove" ) {
-		if ( record && !( obj instanceof Object ) ) {
-			obj = this.get( obj );
+			key = record ? obj.key : obj.id;
+		}
+		else if ( op === "remove" && record ) {
+			key = obj.key || obj;
 		}
 
-		key = record ? obj.key : obj.id;
-	}
-	else if ( op === "remove" && record ) {
-		key = obj.key || obj;
-	}
-
-	if ( op === "get" ) {
 		if ( mongo ) {
-			mongodb.connect( this.mongodb, function( e, db ) {
+			mongodb.connect( this.mongodb, function ( e, db ) {
 				if ( e ) {
 					if ( db ) {
 						db.close();
 					}
 
-					defer.reject( e );
+					return defer.reject( e );
 				}
-				else {
-					db.createCollection( self.id, function ( e, collection ) {
-						if ( e ) {
-							defer.reject( e );
-							db.close();
-						}
-						else if ( record ) {
+
+				db.collection( self.id, function ( e, collection ) {
+					if ( e ) {
+						db.close();
+						return defer.reject( e );
+					}
+
+					if ( op === "get" ) {
+						if ( record ) {
 							collection.find( {_id: obj.key} ).limit( 1 ).toArray( function ( e, recs ) {
+								db.close();
+
 								if ( e ) {
 									defer.reject( e );
+								}
+								else if ( recs.length === 0 ) {
+									defer.resolve( null );
 								}
 								else {
 									delete recs[0]._id;
@@ -7307,157 +7395,89 @@ DataStore.prototype.storage = function ( obj, op, type ) {
 										defer.reject( e );
 									} );
 								}
-
-								db.close();
 							} );
 						}
 						else {
 							collection.find( {} ).toArray( function ( e, recs ) {
-								var i   = -1,
-								    nth = recs.length;
-								
+								var i, nth;
+
 								if ( e ) {
-									defer.reject( e );
+									db.close();
+									return defer.reject( e );
 								}
-								else {
-									if ( nth > 0 ) {
-										self.records = recs.map( function ( r ) {
-											var rec = {key: r._id, index: ++i, data: {}};
 
-											self.keys[rec.key] = rec.index;
-											rec.data = r;
-											delete rec.data._id;
+								i   = -1;
+								nth = recs.length;
 
-											return rec;
-										} );
-										
-										self.total = nth;
-									}
-									
-									defer.resolve( self.records );
+								if ( nth > 0 ) {
+									self.records = recs.map( function ( r ) {
+										var rec = {key: r._id, index: ++i, data: {}};
+
+										self.indexes.key[rec.key] = rec.index;
+										rec.data = r;
+										delete rec.data._id;
+										self.setIndexes( rec );
+
+										return rec;
+									} );
+
+									self.total = nth;
 								}
 
 								db.close();
+								defer.resolve( self.records );
 							} );
 						}
-					} );
-				}
-			} );
-		}
-		else {
-			result = session ? sessionStorage.getItem( key ) : localStorage.getItem( key );
-
-			if ( result !== null ) {
-				result = json.decode( result );
-
-				if ( record ) {
-					self.set( key, result, true ).then( function ( rec ) {
-						defer.resolve( rec );
-					}, function ( e ) {
-						defer.reject( e );
-					} );
-				}
-				else {
-					utility.merge( self, result );
-					defer.resolve( self );
-				}
-			}
-			else {
-				defer.resolve( self );
-			}
-		}
-	}
-	else if ( op === "remove" ) {
-		if ( mongo ) {
-			mongodb.connect( this.mongodb, function( e, db ) {
-				if ( e ) {
-					if ( db ) {
-						db.close();
 					}
-
-					defer.reject( e );
-				}
-				else {
-					db.createCollection( self.id, function ( e, collection ) {
-						if ( e ) {
-							if ( db ) {
-								db.close();
-							}
-
-							defer.reject( e );
-						}
-						else {
-							collection.remove( record ? {_id: key} : {}, {safe: true}, function ( e, arg ) {
-								if ( e ) {
-									defer.reject( e );
-								}
-								else {
-									defer.resolve( arg );
-								}
-
-								db.close();
-							} );
-						}
-					} );
-				}
-			} );
-		}
-		else {
-			session ? sessionStorage.removeItem( key ) : localStorage.removeItem( key );
-			defer.resolve( this );
-		}
-	}
-	else if ( op === "set" ) {
-		if ( mongo ) {
-			mongodb.connect( this.mongodb, function( e, db ) {
-				if ( e ) {
-					if ( db ) {
-						db.close();
-					}
-
-					defer.reject( e );
-				}
-				else {
-					db.createCollection( self.id, function ( e, collection ) {
-						if ( e ) {
-							defer.reject( e );
+					else if ( op === "remove" ) {
+						collection.remove( record ? {_id: key} : {}, {safe: true}, function ( e, arg ) {
 							db.close();
-						}
-						else if ( record ) {
-							collection.update( {_id: obj.key}, {$set: obj.data}, {w: 1, safe: true, upsert: true}, function ( e, arg ) {
+
+							if ( e ) {
+								defer.reject( e );
+							}
+							else {
+								defer.resolve( arg );
+							}
+						} );
+					}
+					else if ( op === "set" ) {
+						if ( record ) {
+							collection.update( {_id: obj.key}, obj.data, {w: 1, safe: true, upsert: true}, function ( e, arg ) {
+								db.close();
+
 								if ( e ) {
 									defer.reject( e );
 								}
 								else {
 									defer.resolve( arg );
 								}
-
-								db.close();
 							} );
 						}
 						else {
 							// Removing all documents & re-inserting
 							collection.remove( {}, {w: 1, safe: true}, function ( e ) {
+								var deferreds;
+
 								if ( e ) {
-									defer.reject( e );
 									db.close();
+									return defer.reject( e );
+
 								}
 								else {
 									deferreds = [];
 
 									array.each( self.records, function ( i ) {
 										var data   = {},
-										    defer2 = deferred.factory();
+											defer2 = deferred.factory();
 
 										deferreds.push( defer2 );
 
 										utility.iterate( i.data, function ( v, k ) {
-											if ( !array.contains( self.collections, k ) ) {
-												data[k] = v;
-											}
+											data[k] = v;
 										} );
 
-										collection.update( {_id: i.key}, {$set: data}, {w:1, safe:true, upsert:true}, function ( e, arg ) {
+										collection.update( {_id: i.key}, data, {w:1, safe:true, upsert:true}, function ( e, arg ) {
 											if ( e ) {
 												defer2.reject( e );
 											}
@@ -7468,23 +7488,65 @@ DataStore.prototype.storage = function ( obj, op, type ) {
 									} );
 
 									utility.when( deferreds ).then( function ( result ) {
+										db.close();
 										defer.resolve( result );
-										db.close();
 									}, function ( e ) {
-										defer.reject( e );
 										db.close();
+										defer.reject( e );
 									} );
 								}
 							} );
 						}
-					} );
-				}
+					}
+					else {
+						db.close();
+						defer.reject( null );
+					}
+				} );
 			} );
 		}
 		else {
-			data = json.encode( record ? obj.data : {total: this.total, keys: this.keys, records: this.records} );
-			session ? sessionStorage.setItem( key, data ) : localStorage.setItem( key, data );
-			defer.resolve( this );
+			if ( op === "get" ) {
+				result = session ? sessionStorage.getItem( key ) : localStorage.getItem( key );
+
+				if ( result !== null ) {
+					result = json.decode( result );
+
+					if ( record ) {
+						self.set( key, result, true ).then( function ( rec ) {
+							defer.resolve( rec );
+						}, function ( e ) {
+							defer.reject( e );
+						} );
+					}
+					else {
+						utility.merge( self, result );
+						defer.resolve( self );
+					}
+				}
+				else {
+					defer.resolve( self );
+				}
+
+				// Decorating loaded state for various code paths
+				defer.then( function () {
+					self.loaded = true;
+				}, function ( e ) {
+					throw e;
+				} );
+			}
+			else if ( op === "remove" ) {
+				session ? sessionStorage.removeItem( key ) : localStorage.removeItem( key );
+				defer.resolve( this );
+			}
+			else if ( op === "set" ) {
+				data = json.encode( record ? obj.data : {total: this.total, index: this.index, indexes: this.indexes, records: this.records} );
+				session ? sessionStorage.setItem( key, data ) : localStorage.setItem( key, data );
+				defer.resolve( this );
+			}
+			else {
+				defer.reject( null );
+			}
 		}
 	}
 
@@ -7508,10 +7570,6 @@ DataStore.prototype.storage = function ( obj, op, type ) {
  * } );
  */
 DataStore.prototype.sync = function () {
-	if ( this.uri === null || string.isEmpty( this.uri ) ) {
-		throw new Error( label.invalidArguments );
-	}
-
 	var self   = this,
 	    events = ( this.events === true ),
 	    defer  = deferred.factory(),
@@ -7530,7 +7588,7 @@ DataStore.prototype.sync = function () {
 		var data;
 
 		if ( typeof arg != "object" ) {
-			throw new Error( label.expectedObject );
+			return failure( new Error( label.expectedObject ) );
 		}
 
 		if ( self.source !== null ) {
@@ -7570,15 +7628,20 @@ DataStore.prototype.sync = function () {
 		defer.reject( e );
 	};
 
-	if ( events ) {
-		this.dispatch( "beforeSync", this.uri );
-	}
-
-	if ( this.callback !== null ) {
-		client.jsonp( this.uri, success, failure, {callback: this.callback} );
+	if ( this.uri === null || string.isEmpty( this.uri ) ) {
+		defer.reject( new Error( label.invalidArguments ) );
 	}
 	else {
-		client.request( this.uri, "GET", success, failure, null, utility.merge( {withCredentials: this.credentials}, this.headers ) );
+		if ( events ) {
+			this.dispatch( "beforeSync", this.uri );
+		}
+
+		if ( this.callback !== null ) {
+			client.jsonp( this.uri, {callback: this.callback} ).then( success, failure );
+		}
+		else {
+			client.request( this.uri, "GET", null, utility.merge( {withCredentials: this.credentials}, this.headers ) ).then( success, failure );
+		}
 	}
 
 	return defer;
@@ -7607,21 +7670,11 @@ DataStore.prototype.teardown = function () {
 			var recordUri = uri + "/" + i.key;
 
 			cache.expire( recordUri, true );
-
-			utility.iterate( i.data, function ( v ) {
-				if ( v === null ) {
-					return;
-				}
-
-				if ( v.data && typeof v.data.teardown == "function" ) {
-					v.data.teardown();
-				}
-			} );
 		} );
 	}
 
 	array.each( this.lists, function ( i ) {
-		i.teardown();
+		i.teardown( true );
 	} );
 
 	this.clear( true );
@@ -7649,25 +7702,26 @@ DataStore.prototype.undo = function ( key, version ) {
 	    previous;
 
 	if ( record === undefined ) {
-		throw new Error( label.invalidArguments );
-	}
-
-	if ( versions ) {
-		previous = versions.get( version || versions.first );
-
-		if ( previous === undefined ) {
-			defer.reject( label.datastoreNoPrevVersion );
-		}
-		else {
-			this.set( key, previous ).then( function ( arg ) {
-				defer.resolve( arg );
-			}, function ( e ) {
-				defer.reject( e );
-			} );
-		}
+		defer.reject( new Error( label.invalidArguments ) );
 	}
 	else {
-		defer.reject( label.datastoreNoPrevVersion );
+		if ( versions ) {
+			previous = versions.get( version || versions.first );
+
+			if ( previous === undefined ) {
+				defer.reject( label.datastoreNoPrevVersion );
+			}
+			else {
+				this.set( key, previous ).then( function ( arg ) {
+					defer.resolve( arg );
+				}, function ( e ) {
+					defer.reject( e );
+				} );
+			}
+		}
+		else {
+			defer.reject( label.datastoreNoPrevVersion );
+		}
 	}
 
 	return defer;
@@ -7707,14 +7761,15 @@ DataStore.prototype.update = function ( key, data ) {
 	    defer  = deferred.factory();
 
 	if ( record === undefined ) {
-		throw new Error( label.invalidArguments );
+		defer.reject( new Error( label.invalidArguments ) );
 	}
-
-	this.set( key, utility.merge( record.data, data ) ).then( function ( arg ) {
-		defer.resolve( arg );
-	}, function ( e ) {
-		defer.reject( e );
-	} );
+	else {
+		this.set( key, utility.merge( record.data, data ) ).then( function ( arg ) {
+			defer.resolve( arg );
+		}, function ( e ) {
+			defer.reject( e );
+		} );
+	}
 
 	return defer;
 };
@@ -7762,7 +7817,7 @@ var string = {
 	 * keigai.util.string.escape( "{hello}" ); // "\{hello\}"
 	 */
 	escape : function ( obj ) {
-		return obj.replace( /[\-\[\]{}()*+?.,\\\^\$|#\s]/g, "\\$&" );
+		return obj.replace( /[\-\[\]{}()*+?.,\\\/\^\$|#\s]/g, "\\$&" );
 	},
 
 	/**
@@ -7961,7 +8016,7 @@ var string = {
 	 * keigai.util.string.trim( "  hello world " ); // "hello world"
 	 */
 	trim : function ( obj ) {
-		return obj.replace( /^(\s+|\t+)|(\s+|\t+)$/g, "" );
+		return obj.replace( /^(\s+|\t+|\n+)|(\s+|\t+|\n+)$/g, "" );
 	},
 
 	/**
@@ -8191,16 +8246,22 @@ var utility = {
 	 * y.a; // true
 	 */
 	clone : function ( obj, shallow ) {
-		var clone;
+		var clone, result;
 
 		if ( shallow === true ) {
-			return json.decode( json.encode( obj ) );
+			return obj !== undefined && obj !== null ? json.decode( json.encode( obj ) ) : obj;
 		}
 		else if ( !obj || regex.primitive.test( typeof obj ) || ( obj instanceof RegExp ) ) {
 			return obj;
 		}
 		else if ( obj instanceof Array ) {
-			return obj.slice();
+			result = [];
+
+			array.each( obj, function ( i, idx ) {
+				result[ idx ] = utility.clone( i );
+			} );
+
+			return result;
 		}
 		else if ( !server && !client.ie && obj instanceof Document ) {
 			return xml.decode( xml.encode( obj ) );
@@ -8295,6 +8356,35 @@ var utility = {
 	},
 
 	/**
+	 * Curries a Function
+	 *
+	 * Note: Function to curry must return a Function
+	 *
+	 * @method curry
+	 * @memberOf utility
+	 * @return {Function} Curried Function
+	 * @example
+	 * function f ( a, b ) {
+	 *   return function ( n ) {
+	 *     return ( a + b ) * n;
+	 *   };
+	 * }
+	 *
+	 * var g = keigai.util.curry( f, 2, 8 );
+	 *
+	 * g( 5 ); // 50
+	 */
+	curry : function () {
+		var args = array.cast( arguments ),
+		    fn   = args.shift(),
+		    cfn  = fn.apply( fn, args );
+
+		return function () {
+			return cfn.apply( cfn, arguments );
+		};
+	},
+
+	/**
 	 * Defers the execution of Function by at least the supplied milliseconds.
 	 * Timing may vary under "heavy load" relative to the CPU & client JavaScript engine.
 	 *
@@ -8305,7 +8395,6 @@ var utility = {
 	 * @param  {Number}   id     [Optional] ID of the deferred function
 	 * @param  {Boolean}  repeat [Optional] Describes the execution, default is `false`
 	 * @return {String}          ID of the timer
-	 * @private
 	 */
 	defer : function ( fn, ms, id, repeat ) {
 		var op;
@@ -8508,10 +8597,6 @@ var utility = {
 	 * } );
 	 */
 	iterate : function ( obj, fn ) {
-		if ( typeof fn != "function" ) {
-			throw new Error( label.invalidArguments );
-		}
-
 		array.each( Object.keys( obj ), function ( i ) {
 			return fn.call( obj, obj[i], i );
 		} );
@@ -8597,15 +8682,18 @@ var utility = {
 	 */
 	parse : function ( uri ) {
 		var obj    = {},
-		    parsed = {};
+		    parsed = {},
+		    host, protocol;
 
 		if ( uri === undefined ) {
 			uri = !server ? location.href : "";
 		}
 
 		if ( !server ) {
-			obj = document.createElement( "a" );
+			obj      = document.createElement( "a" );
 			obj.href = uri;
+			host     = obj.href.match( regex.host )[1];
+			protocol = obj.href.match( regex.protocol )[1];
 		}
 		else {
 			obj = url.parse( uri );
@@ -8621,13 +8709,13 @@ var utility = {
 
 		parsed = {
 			auth     : server ? null : regex.auth.exec( uri ),
-			protocol : obj.protocol || "http:",
-			hostname : obj.hostname || "localhost",
+			protocol : obj.protocol || protocol,
+			hostname : obj.hostname || host,
 			port     : obj.port ? number.parse( obj.port, 10 ) : "",
 			pathname : obj.pathname,
 			search   : obj.search   || "",
 			hash     : obj.hash     || "",
-			host     : obj.host     || "localhost"
+			host     : obj.host     || host
 		};
 
 		// 'cause IE is ... IE; required for data.batch()
@@ -8655,6 +8743,30 @@ var utility = {
 		parsed.query = utility.queryString( null, parsed.search );
 
 		return parsed;
+	},
+
+	/**
+	 * Creates a partially applied Function
+	 *
+	 * @method partial
+	 * @memberOf utility
+	 * @return {Function} Partial Function
+	 * @example
+	 * function f ( a, b ) {
+	 *   return a + b;
+	 * }
+	 *
+	 * var g = keigai.util.partial( f, 2 );
+	 *
+	 * g( 2 ); // 4
+	 */
+	partial : function () {
+		var args = array.cast( arguments ),
+		    fn   = args.shift();
+
+		return function () {
+			return fn.apply( fn, args.concat( array.cast( arguments ) ) );
+		};
 	},
 
 	/**
@@ -9039,7 +9151,7 @@ function xhr () {
 	    XMLHttpRequest, headers, dispatch, success, failure, state;
 
 	headers = {
-		"user-agent"   : "keigai/0.5.3 node.js/" + process.versions.node.replace( /^v/, "" ) + " (" + string.capitalize( process.platform ) + " V8/" + process.versions.v8 + " )",
+		"user-agent"   : "keigai/1.0.3 node.js/" + process.versions.node.replace( /^v/, "" ) + " (" + string.capitalize( process.platform ) + " V8/" + process.versions.v8 + " )",
 		"content-type" : "text/plain",
 		"accept"       : "*/*"
 	};
@@ -9361,6 +9473,10 @@ function xhr () {
 
 		this._headers.host = parsed.host;
 
+		if ( this._headers["x-requested-with"] === "XMLHttpRequest" ) {
+			delete this._headers["x-requested-with"];
+		}
+
 		options = {
 			hostname : parsed.hostname,
 			path     : parsed.path,
@@ -9533,25 +9649,6 @@ var xml = {
  * @return {Undefined} undefined
  */
 function bootstrap () {
-	// Second phase
-	function init () {
-		TIME = new Date().getTime();
-
-		// Cache garbage collector (every minute)
-		utility.repeat( function () {
-			cache.clean();
-		}, 60000, "cacheGarbageCollector");
-	}
-
-	// Repeating function to call init()
-	function fn () {
-		if ( regex.complete_loaded.test( document.readyState ) ) {
-			init();
-
-			return false;
-		}
-	}
-
 	// Describing the Client
 	if ( !server ) {
 		client.version = client.version();
@@ -9652,6 +9749,8 @@ function bootstrap () {
 		WORKER = global.URL.createObjectURL( utility.blob( "var " + string.fromObject( array, "array" ) + ", " + string.fromObject( regex, "regex" ) + ", " + string.fromObject( string, "string" ) + ", " + string.fromObject( utility, "utility" ) + "; onmessage = " + store.worker.toString() + ";" ) );
 	}
 
+	TIME = new Date().getTime();
+
 	// Setting up `utility.render()`
 	RENDER = global.requestAnimationFrame || function ( fn ) {
 		var offset = new Date().getTime() - TIME;
@@ -9660,22 +9759,6 @@ function bootstrap () {
 			fn( offset );
 		}, 16, offset );
 	};
-
-	// Initializing
-	if ( typeof exports != "undefined" || typeof define == "function" || regex.complete_loaded.test( document.readyState ) ) {
-		init();
-	}
-	else if ( typeof document.addEventListener == "function" ) {
-		document.addEventListener( "DOMContentLoaded" , function () {
-			init();
-		}, false );
-	}
-	else if ( typeof document.attachEvent == "function" ) {
-		document.attachEvent( "onreadystatechange" , fn );
-	}
-	else {
-		utility.repeat( fn );
-	}
 }
 
 // Bootstrapping
@@ -9693,9 +9776,13 @@ return {
 		base     : utility.base,
 		clone    : utility.clone,
 		coerce   : utility.coerce,
+		curry    : utility.curry,
+		csv      : csv,
 		defer    : deferred.factory,
+		delay    : utility.defer,
 		element  : element,
 		extend   : utility.extend,
+		genId    : utility.genId,
 		iterate  : utility.iterate,
 		json     : json,
 		jsonp    : client.jsonp,
@@ -9706,6 +9793,7 @@ return {
 		number   : number,
 		observer : observable.factory,
 		parse    : utility.parse,
+		partial  : utility.partial,
 		prevent  : utility.prevent,
 		race     : utility.race,
 		render   : utility.render,
@@ -9718,7 +9806,7 @@ return {
 		walk     : utility.walk,
 		when     : utility.when
 	},
-	version : "0.5.3"
+	version : "1.0.3"
 };
 } )();
 

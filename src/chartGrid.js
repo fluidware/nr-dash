@@ -15,7 +15,8 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 	    nth     = 0,
 	    total   = 0,
 	    cleared = false,
-	    lcharts, rname, keys, obj;
+	    lcharts, rname, keys, obj,
+	    boundary;
 
 	if ( charts[grid.id] === undefined ) {
 		lcharts = [];
@@ -37,6 +38,10 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 
 		obj = charts[grid.store.id] = chartGridTransform( keys, fields, obj, grid.store.records );
 
+		// Setting a standard boundary for all charts
+		boundary = Math.ceil( array.max( array.cast( obj ).map( function ( i ) { return i.length; } ) ) / 2 );
+		boundary = boundary * ( boundary <= 6 ? 20 : 17 );
+
 		array.each( keys, function ( i ) {
 			var options = {title: i, id: i};
 
@@ -44,7 +49,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 				options.tickFormat = "s";
 			}
 
-			chart( ctarget, obj[i], options ).then( function ( chart ) {
+			chart( ctarget, obj[i], options, boundary ).then( function ( chart ) {
 				lcharts.push( chart );
 
 				circles = circles.concat( element.find( chart.element, "circle" ) );
@@ -77,7 +82,9 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 								if ( found[key] > 1 ) {
 									++nth;
 									seen.push( idx );
-									d3.select( i ).attr( "opacity", 0 ).on( "mouseout", function () { d3.select( this ).attr( "opacity", 0 ).style( "opacity", 0 ); } );
+									d3.select( i ).attr( "opacity", 0 ).on( "mouseout", function () {
+										d3.select( this ).attr( "opacity", 0 ).style( "opacity", 0 );
+									} );
 								}
 							}
 						} );

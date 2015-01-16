@@ -9,7 +9,7 @@ module.exports = function (grunt) {
 				         " * <%= pkg.description %>\n" +
 				         " *\n" +
 				         " * @author <%= pkg.author.name %> <<%= pkg.author.email %>>\n" +
-				         " * @copyright <%= grunt.template.today('yyyy') %> Fluidware\n" +
+				         " * @copyright <%= grunt.template.today('yyyy') %> SurveyMonkey\n" +
 				         " * @license <%= pkg.licenses[0].type %> <<%= pkg.licenses[0].url %>>\n" +
 				         " * @link <%= pkg.homepage %>\n" +
 				         " * @version <%= pkg.version %>\n" +

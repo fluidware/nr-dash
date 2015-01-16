@@ -1,6 +1,6 @@
 {
 	"api": null,
-	"colors": ["#1269B0", "#BD2B2B", "#0F5699", "#90C8E4", "#2C0905", "#272728"],
+	"colors": ["#97a932", "#86962c", "#748227", "#636e21", "#515b1b", "#3f4715", "#2e330f", "#1c2009", "#b5c846", "#bdce5a", "#c5d46e", "#ccda81", "#d4e095", "#dce5a9", "#e4ebbc", "#ecf1d0"],
 	"cycle": false,
 	"default": null,
 	"expire": 30,
@@ -9,7 +9,7 @@
 	"pause": 21,
 	"port": 8000,
 	"si": "Disk|Memory|Network",
-	"transition": 2,
+	"transition": 0,
 	"xformat": "hh:mm A",
 	"pills": [
 		{
