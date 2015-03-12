@@ -16,20 +16,22 @@ function hashchange ( ev ) {
 	prevent( ev );
 	stop( ev );
 
-	if ( $oldItem && $oldDiv ) {
-		element.klass( $oldItem.parentNode, "active", false );
-		element.klass( $oldDiv, "hidden" );
-	}
+	render( function () {
+		if ( $oldItem && $oldDiv ) {
+			element.removeClass( $oldItem.parentNode, "active" );
+			element.addClass( $oldDiv, "hidden" );
+		}
 
-	if ( $newItem && $newDiv ) {
-		hash = newHash;
-		element.klass( $newItem.parentNode, "active" );
-		element.klass( $newDiv, "hidden", false );
-	}
-	else {
-		hash = DEFAULT;
-		document.location.hash = DEFAULT;
-	}
+		if ( $newItem && $newDiv ) {
+			hash = newHash;
+			element.addClass( $newItem.parentNode, "active" );
+			element.removeClass( $newDiv, "hidden" );
+		}
+		else {
+			hash = DEFAULT;
+			document.location.hash = DEFAULT;
+		}
 
-	element.dispatch( COPY, "render" );
+		element.dispatch( COPY, "render" );
+	} );
 }

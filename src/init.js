@@ -17,7 +17,7 @@ function init () {
 			util.merge( config, arg );
 			headers["X-Api-Key"] = config.api;
 
-			generate().then(function () {
+			generate().then( function () {
 				// Wiring DOM events
 				events();
 

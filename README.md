@@ -1,7 +1,7 @@
 # nr-dash
 
 ## Introduction
-***nr-dash*** is a [NewRelic](http://newrelic.com) dashboard by [Fluidware](http://fluidware.com) that can be installed, configured and running in under 2 minutes.
+***nr-dash*** is a [NewRelic](http://newrelic.com) dashboard by [SurveyMonkey](http://surveymonkey.com) that can be installed, configured and running in under 2 minutes.
 
 ## Requirements
 - [NewRelic](http://newrelic.com) account with 'Integrations' enabled
@@ -113,5 +113,5 @@ If you want charts, add a `metrics` Object to the pill:
 ```
 
 ## License
-Copyright (c) 2014 Fluidware
+Copyright (c) 2015 SurveyMonkey
 Licensed under the MIT license.
