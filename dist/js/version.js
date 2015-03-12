@@ -1,5 +1,5 @@
 // Sets the copyright date & version
-(function ( util, nrDash ) {
+( function ( util, nrDash ) {
 "use strict";
 
 var $       = util.$,

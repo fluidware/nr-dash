@@ -3,11 +3,11 @@
  *
  * NewRelic Dashboard
  *
- * @author Jason Mulligan <jmulligan@fluidware.com>
+ * @author Jason Mulligan <jason.mulligan@avoidwork.com>
  * @copyright 2015 SurveyMonkey
  * @license MIT <https://raw.github.com/fluidware/nr-dash/master/LICENSE>
- * @link http://fluidware.com
- * @version 1.2.0
+ * @link http://surveymonkey.com
+ * @version 1.2.1
  */
 ( function ( document, window, keigai, moment, dimple ) {
 "use strict";
@@ -130,7 +130,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 	    lcharts, rname, keys, obj,
 	    boundary;
 
-	if ( charts[grid.id] === undefined ) {
+	if ( !charts[grid.id] ) {
 		lcharts = [];
 		fields  = {};
 		rname   = /(.*\.)?/;
@@ -307,10 +307,10 @@ function click ( ev ) {
  */
 function cycle ( secs ) {
 	repeat( function () {
-		var current = $( "ul.pills .active")[0],
+		var current = $( "ul.pills .active" )[0],
 		    next    = current.nextElementSibling || current.parentNode.childNodes[0];
 
-		if ( !element.hasClass( next, "active") ) {
+		if ( !element.hasClass( next, "active" ) ) {
 			element.dispatch( next.childNodes[0], "click" );
 		}
 	}, secs * 1000, "navCycle", false );
@@ -344,8 +344,8 @@ function events () {
 	// Setting state
 	if ( hash !== "" && array.contains( OPTIONS, hash ) ) {
 		log( "Loading hash" );
-		element.klass( $( "#" + hash )[0], "hidden", false );
-		element.klass( $( "a[href='#" + hash + "']" )[0].parentNode, "active" );
+		element.removeClass( $( "#" + hash )[0], "hidden" );
+		element.addClass( $( "a[href='#" + hash + "']" )[0].parentNode, "active" );
 		element.dispatch( COPY, "render" );
 	}
 	else {
@@ -434,22 +434,24 @@ function hashchange ( ev ) {
 	prevent( ev );
 	stop( ev );
 
-	if ( $oldItem && $oldDiv ) {
-		element.klass( $oldItem.parentNode, "active", false );
-		element.klass( $oldDiv, "hidden" );
-	}
+	render( function () {
+		if ( $oldItem && $oldDiv ) {
+			element.removeClass( $oldItem.parentNode, "active" );
+			element.addClass( $oldDiv, "hidden" );
+		}
 
-	if ( $newItem && $newDiv ) {
-		hash = newHash;
-		element.klass( $newItem.parentNode, "active" );
-		element.klass( $newDiv, "hidden", false );
-	}
-	else {
-		hash = DEFAULT;
-		document.location.hash = DEFAULT;
-	}
+		if ( $newItem && $newDiv ) {
+			hash = newHash;
+			element.addClass( $newItem.parentNode, "active" );
+			element.removeClass( $newDiv, "hidden" );
+		}
+		else {
+			hash = DEFAULT;
+			document.location.hash = DEFAULT;
+		}
 
-	element.dispatch( COPY, "render" );
+		element.dispatch( COPY, "render" );
+	} );
 }
 
 /**
@@ -471,7 +473,7 @@ function init () {
 			util.merge( config, arg );
 			headers["X-Api-Key"] = config.api;
 
-			generate().then(function () {
+			generate().then( function () {
 				// Wiring DOM events
 				events();
 
@@ -522,11 +524,11 @@ function metrics () {
 					if ( host.test( url ) ) {
 						if ( i.data.links !== undefined && i.data.links[key] !== undefined && i.data.links[key].length > 0 ) {
 							url = url.replace( host, i.data.links[key][0] || 0 );
-							deferreds.push( request( url, "GET", null, null, null, headers ) );
+							deferreds.push( request( url, "GET", null, headers ) );
 						}
 					}
 					else {
-						deferreds.push( request( url, "GET", null, null, null, headers ) );
+						deferreds.push( request( url, "GET", null, headers ) );
 					}
 				} );
 
@@ -602,7 +604,7 @@ function view () {
 				    keys      = array.keys( data ).sort( array.sort );
 
 				if ( lhash == hash ) {
-					if ( ctarget === undefined && ( keys.length > 0 || pill.chartGrid === true ) ) {
+					if ( !ctarget && ( keys.length > 0 || pill.chartGrid === true ) ) {
 						ctarget = element.create( "section", {"class": "charts"}, target );
 					}
 
@@ -619,8 +621,8 @@ function view () {
 					render( function () {
 						var lgrid = grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
 
-						if ( ctarget !== undefined ) {
-							element.klass( lgrid.element, "hasCharts" );
+						if ( ctarget ) {
+							element.addClass( lgrid.element, "hasCharts" );
 						}
 
 						if ( pill.chartGrid === true ) {
@@ -675,7 +677,7 @@ function view () {
 				var target = element.find( el, "span." + string.singular( lhash ) + "_name" )[0],
 				    text   = target ? element.text( target ) : "";
 
-				if ( target !== undefined ) {
+				if ( target ) {
 					element.html( target, "<a title=\"" + text + "\" class=\"tooltip\">" + text + "</a>" );
 				}
 			};
@@ -683,14 +685,14 @@ function view () {
 			render( function () {
 				var lgrid;
 
-				if ( ctarget === undefined && pill.chartGrid === true ) {
+				if ( !ctarget && pill.chartGrid === true ) {
 					ctarget = element.create( "section", {"class": "charts"}, target );
 				}
 
 				lgrid = grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
 
-				if ( ctarget !== undefined ) {
-					element.klass( lgrid.element, "hasCharts" );
+				if ( ctarget ) {
+					element.addClass( lgrid.element, "hasCharts" );
 					chartGrid( lgrid, si, ctarget, lhash );
 				}
 			} );
@@ -705,7 +707,7 @@ function view () {
 window.nrDash = {
 	charts  : charts,
 	stores  : stores,
-	version : "1.2.0"
+	version : "1.2.1"
 };
 
 // Initializing

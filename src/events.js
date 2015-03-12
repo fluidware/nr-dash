@@ -15,8 +15,8 @@ function events () {
 	// Setting state
 	if ( hash !== "" && array.contains( OPTIONS, hash ) ) {
 		log( "Loading hash" );
-		element.klass( $( "#" + hash )[0], "hidden", false );
-		element.klass( $( "a[href='#" + hash + "']" )[0].parentNode, "active" );
+		element.removeClass( $( "#" + hash )[0], "hidden" );
+		element.addClass( $( "a[href='#" + hash + "']" )[0].parentNode, "active" );
 		element.dispatch( COPY, "render" );
 	}
 	else {

@@ -23,7 +23,7 @@ function view () {
 				    keys      = array.keys( data ).sort( array.sort );
 
 				if ( lhash == hash ) {
-					if ( ctarget === undefined && ( keys.length > 0 || pill.chartGrid === true ) ) {
+					if ( !ctarget && ( keys.length > 0 || pill.chartGrid === true ) ) {
 						ctarget = element.create( "section", {"class": "charts"}, target );
 					}
 
@@ -40,8 +40,8 @@ function view () {
 					render( function () {
 						var lgrid = grid( target, store, fields, fields, {order: order, pageSize: config.pageSize}, true );
 
-						if ( ctarget !== undefined ) {
-							element.klass( lgrid.element, "hasCharts" );
+						if ( ctarget ) {
+							element.addClass( lgrid.element, "hasCharts" );
 						}
 
 						if ( pill.chartGrid === true ) {
@@ -96,7 +96,7 @@ function view () {
 				var target = element.find( el, "span." + string.singular( lhash ) + "_name" )[0],
 				    text   = target ? element.text( target ) : "";
 
-				if ( target !== undefined ) {
+				if ( target ) {
 					element.html( target, "<a title=\"" + text + "\" class=\"tooltip\">" + text + "</a>" );
 				}
 			};
@@ -104,14 +104,14 @@ function view () {
 			render( function () {
 				var lgrid;
 
-				if ( ctarget === undefined && pill.chartGrid === true ) {
+				if ( !ctarget && pill.chartGrid === true ) {
 					ctarget = element.create( "section", {"class": "charts"}, target );
 				}
 
 				lgrid = grid( target, store, fields, fields, {callback: callback, order: order, pageSize: config.pageSize}, true );
 
-				if ( ctarget !== undefined ) {
-					element.klass( lgrid.element, "hasCharts" );
+				if ( ctarget ) {
+					element.addClass( lgrid.element, "hasCharts" );
 					chartGrid( lgrid, si, ctarget, lhash );
 				}
 			} );

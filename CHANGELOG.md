@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.2.1
+- Updating dependencies
+- Cleaned up statements in multiple functions
+
 ## 1.2.0
 - Fixed chart generation, such that there is a dynamic & standard legend boundary
 - Changing visual style to match SurveyMonkey

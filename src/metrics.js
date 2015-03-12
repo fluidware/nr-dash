@@ -28,11 +28,11 @@ function metrics () {
 					if ( host.test( url ) ) {
 						if ( i.data.links !== undefined && i.data.links[key] !== undefined && i.data.links[key].length > 0 ) {
 							url = url.replace( host, i.data.links[key][0] || 0 );
-							deferreds.push( request( url, "GET", null, null, null, headers ) );
+							deferreds.push( request( url, "GET", null, headers ) );
 						}
 					}
 					else {
-						deferreds.push( request( url, "GET", null, null, null, headers ) );
+						deferreds.push( request( url, "GET", null, headers ) );
 					}
 				} );
 

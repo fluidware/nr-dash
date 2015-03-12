@@ -18,7 +18,7 @@ function chartGrid ( grid, si, ctarget, lhash ) {
 	    lcharts, rname, keys, obj,
 	    boundary;
 
-	if ( charts[grid.id] === undefined ) {
+	if ( !charts[grid.id] ) {
 		lcharts = [];
 		fields  = {};
 		rname   = /(.*\.)?/;
